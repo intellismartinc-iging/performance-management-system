@@ -1,0 +1,9 @@
+/* Dashboard layout */
+@theme {
+  --container-pms-dashboard: 90rem;
+  --spacing-pms-gutter: clamp(1rem, 4vw, 2rem);
+  --spacing-pms-section: clamp(1.5rem, 4vw, 3rem);
+  --spacing-pms-header: 4rem;
+  --spacing-pms-control: 2.5rem;
+  --spacing-pms-touch: 2.75rem;
+}

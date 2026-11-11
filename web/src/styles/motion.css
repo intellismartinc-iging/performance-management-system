@@ -1,0 +1,12 @@
+/* Dashboard motion */
+:root {
+  --pms-motion-feedback: 100ms;
+  --pms-motion-tooltip: 150ms;
+  --pms-motion-disclosure: 240ms;
+  --pms-motion-overlay: 400ms;
+}
+
+@theme {
+  --ease-pms-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pms-exit: cubic-bezier(0.4, 0, 1, 1);
+}

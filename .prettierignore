@@ -1,0 +1,6 @@
+web/
+backend/
+pnpm-lock.yaml
+**/dist
+packages/shared-types/src/rows
+.github/CODEOWNERS

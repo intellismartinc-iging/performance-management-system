@@ -1,0 +1,9 @@
+/* Icon sizes and media frames */
+@theme {
+  --spacing-pms-icon-inline: 1rem;
+  --spacing-pms-icon-control: 1.25rem;
+  --spacing-pms-icon-nav: 1.5rem;
+  --spacing-pms-icon-empty: 2rem;
+  --pms-nav-active-icon-stroke: 2.5;
+  --aspect-pms-media-card: 4 / 3;
+}

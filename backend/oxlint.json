@@ -2,7 +2,26 @@
   "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/src/rules.rs",
   "rules": {
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-floating-promises": "warn"
+    "@typescript-eslint/no-floating-promises": "warn",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@pms/web", "@pms/web/*"],
+            "message": "backend must not import web."
+          },
+          {
+            "group": ["@pms/shared-types/*"],
+            "message": "Import from the package root: @pms/shared-types."
+          },
+          {
+            "group": ["**/web/**", "**/packages/**"],
+            "message": "Do not reach into another workspace by path."
+          }
+        ]
+      }
+    ]
   },
   "env": {
     "node": true

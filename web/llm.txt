@@ -1,0 +1,200 @@
+WEB FOLDER RULES
+
+This file is the single place for the rules of every folder in web/. Read the
+section of a folder before you add or change a file in it. It replaces the
+rules.txt files that used to sit inside each folder.
+
+Sections:
+  src/components/       src/features/        src/layouts/
+  src/api/              src/services/        src/hooks/
+  src/context/          src/stores/          src/lib/
+  src/utils/            src/types/           src/styles/
+  public/assets/        tests/
+
+
+==============================================================================
+src/components/
+==============================================================================
+
+This folder contains shared and reusable UI components used throughout the application. Components should be organized based on their responsibility, complexity, and level of reusability using an Atomic Design-inspired architecture, while keeping shadcn/ui components in a dedicated ui/ directory.
+
+ui/: Foundational UI primitives and customized components from shadcn/ui, such as buttons, inputs, dialogs, dropdowns, tables, and other reusable interface elements.
+atoms/: Small, foundational custom UI elements such as status indicators, typography components, and other simple reusable elements.
+molecules/: Reusable combinations of smaller components, such as form fields, search inputs, filter controls, and input groups.
+organisms/: More complex shared UI components composed of smaller components, such as generic data tables, navigation menus, notification panels, and dashboard widgets.
+templates/: Reusable page-level UI structures and section compositions that define common content arrangements.
+
+Keep shared components generic, reusable, accessible, properly typed, and independent of feature-specific business logic. Use shadcn/ui primitives as the foundation for custom components whenever appropriate. Follow consistent styling conventions using Tailwind CSS and the established design system.
+
+Feature-specific components should remain inside their respective feature directories rather than being placed in the global components folder.
+
+Avoid duplicating existing shadcn/ui components, creating unnecessary abstractions, or forcing components into an Atomic Design category when it does not provide a clear organizational benefit.
+
+
+==============================================================================
+src/features/
+==============================================================================
+
+This folder contains the application's feature-specific modules, organized by business domain or functionality. Each feature encapsulates its own components, hooks, services, stores, types, validations, and other related logic when necessary. Features should be modular, reusable, and maintainable, with clear boundaries between business domains. Keep feature-specific logic within its respective module and avoid unnecessary dependencies between features. Shared functionality should be extracted into appropriate global directories such as components, hooks, services, stores, lib, and types. Each feature should expose a clear public API for accessing its functionality from other parts of the application.
+
+
+==============================================================================
+src/layouts/
+==============================================================================
+
+This folder contains reusable layout components that define the overall structure and visual organization of application pages. These layouts provide consistent page composition across different sections of the application, such as DashboardLayout, AuthLayout, and other feature-specific layouts. They may include shared elements such as sidebars, headers, navigation menus, and content containers. Keep layouts modular, reusable, and focused on structural presentation rather than business logic.
+
+
+==============================================================================
+src/api/
+==============================================================================
+
+This folder contains centralized API communication logic, including API client configurations, request and response handling, HTTP headers, authentication handling, interceptors, and shared API utilities. It provides a consistent approach for communicating with external APIs and backend services. Keep API infrastructure reusable, properly typed, and independent of UI components and feature-specific business logic. Feature-specific API operations should remain within their respective feature service modules.
+
+
+==============================================================================
+src/services/
+==============================================================================
+
+This folder contains centralized application services responsible for handling reusable business operations and external integrations, such as authentication, notifications, logging, file uploads, and API communication. Each service should encapsulate its own logic and expose reusable, well-defined functions that can be imported across different features and modules. Keep services independent of UI components, modular, and properly typed. Avoid duplicating business logic across features.
+
+
+==============================================================================
+src/hooks/
+==============================================================================
+
+This folder contains reusable custom React hooks that encapsulate shared client-side logic, stateful behavior, and side effects across different features of the application. Examples include useLocalStorage, useDebounce, useMediaQuery, and other reusable hooks. Hooks should follow React's Rules of Hooks, use proper TypeScript types, and remain focused on a single responsibility. Keep hooks independent of UI presentation and avoid duplicating logic across features.
+
+
+==============================================================================
+src/context/
+==============================================================================
+
+This folder contains React Context providers and custom context hooks for managing shared state and dependencies across component trees. It is intended for application-level concerns that benefit from React's Context API, such as theme configuration, authentication context, localization, and shared provider configurations. Use Context to avoid unnecessary prop drilling when multiple components need access to the same values. Keep contexts modular, properly typed, and optimized to prevent unnecessary re-renders. Avoid duplicating state management responsibilities already handled by Zustand or other dedicated state management solutions.
+
+
+==============================================================================
+src/stores/
+==============================================================================
+
+Zustand State Management Rules:
+
+Use Zustand for shared client-side state management.
+Organize stores inside src/stores/.
+Create separate stores based on application domains or features.
+Use TypeScript interfaces or types for all store states and actions.
+Use Zustand middleware only when necessary, such as persist or devtools.
+Use selectors to subscribe only to the state needed by components.
+Avoid unnecessary global state. Prefer React local state for component-specific UI state.
+Do not use Zustand as a replacement for server-side data fetching or API caching.
+Use TanStack Query for server state when available.
+Never store sensitive authentication credentials or secrets in Zustand.
+In Next.js App Router, avoid sharing mutable Zustand store instances across server requests.
+Keep store actions predictable, reusable, and easy to maintain.
+Avoid creating one massive global store for the entire application.
+
+
+==============================================================================
+src/lib/
+==============================================================================
+
+This folder contains shared application utilities, configurations, helper functions, constants, and third-party library integrations used across the application. It provides centralized, reusable functionality such as database clients, API configurations, currency and date formatters, validation schemas, and other common utilities. Keep modules modular, framework-aware when necessary, properly typed, and independent of feature-specific business logic. Avoid duplicating functionality or placing UI components, React hooks, and application-specific business operations inside this folder.
+
+
+==============================================================================
+src/utils/
+==============================================================================
+
+This folder contains reusable, feature-independent utility functions and helper methods used throughout the application. These utilities handle common tasks such as date and currency formatting, string manipulation, number calculations, data transformations, object manipulation, and other generic operations. Keep utility functions modular, predictable, and preferably pure, with proper TypeScript types. Avoid placing feature-specific business logic, React hooks, UI components, or external service operations inside this folder.
+
+
+==============================================================================
+src/types/
+==============================================================================
+
+This folder contains shared TypeScript types, interfaces, and type definitions used across the application to ensure type safety and consistency. It includes reusable definitions for API responses, application entities, component props, form data, database models, and shared application state. Organize types by domain or responsibility, avoid duplicating existing definitions, and use clear, descriptive naming conventions. Keep feature-specific types within their respective feature folders whenever they are not shared across the application.
+
+
+==============================================================================
+src/styles/
+==============================================================================
+
+PMS style foundations
+
+Colors
+Use blue for primary actions and selected navigation. Reserve brand orange
+for decorative accents. Use semantic warning and danger colors for status.
+Use shadcn theme roles for shared UI, such as bg-background, bg-card,
+text-foreground, text-muted-foreground, and border-border.
+Use colors.css for PMS brand and review accents. For example, use
+bg-(--pms-review-active-surface) with a visible Active or In Progress label.
+Check text contrast against the actual surface in each theme.
+
+Typography
+Use text-pms-page-title for the page heading and text-pms-section-title for
+section headings. Add text-balance to multiline headings.
+Use text-pms-body for copy, max-w-pms-copy for long paragraphs, text-pms-table
+for cells, and text-pms-label for labels. Use tabular-nums for numeric columns
+and text-pms-metric tabular-nums for KPI values. Right-align numeric columns.
+
+Layout
+Use mx-auto w-full max-w-pms-dashboard px-pms-gutter for page content.
+Use gap-pms-section between sections. Use Tailwind's 4px spacing scale inside
+sections. Start with gap-4 for cards and gap-2 for related controls.
+Start with one column and add columns as content fits. Let toolbar controls
+wrap. Keep wide tables in their own horizontal scroll container.
+Use min-h-pms-header for the top bar and min-h-pms-control for dense desktop controls.
+Use min-h-pms-touch and min-w-pms-touch for 44px touch targets.
+
+Surfaces
+Use bg-background for the canvas, border border-border bg-card for resting
+panels, and bg-popover with shadow-pms-float for floating menus.
+Use border-input for control boundaries and border-border for dividers.
+Use rounded-pms-tag, rounded-pms-control, rounded-pms-card, and
+rounded-pms-overlay. Use shadow-pms-overlay and the PMS scrim for dialogs.
+Keyboard focus uses the PMS outline. Keep space around focused controls so
+the outline stays visible.
+
+Motion
+Use motion.css for custom transitions. Use motion-safe:transition-colors
+with duration-(--pms-motion-feedback) for control feedback. Use
+ease-pms-enter for entrances and ease-pms-exit for exits.
+Keep the existing shadcn transitions for dialogs and menus. Use motion-safe:
+or motion-reduce:transition-none for custom motion.
+
+Icons and images
+Use Lucide icons with currentColor. Use size-pms-icon-inline in dense rows,
+size-pms-icon-control in controls, size-pms-icon-nav for navigation, and
+size-pms-icon-empty in empty states. Hide decorative icons from assistive
+tech. Give icon-only buttons an accessible name and a separate touch target.
+Use aspect-square for avatars, aspect-pms-media-card for card images, and
+aspect-video for video. Reserve image space with dimensions or an aspect
+ratio. Use object-cover for crops and object-contain for logos.
+
+Checks
+Check 320, 375, 425, 768, 1024, and 1440px widths and 200% browser zoom.
+Use semantic headings, labelled controls, and table headers. Pair status
+colors with text and verify keyboard focus on interactive elements.
+
+
+==============================================================================
+public/assets/
+==============================================================================
+
+This folder contains static assets and visual resources used throughout the application, including images, illustrations, SVG graphics, icons, and other design-related files. Organize assets by category or purpose to maintain consistency and ease of maintenance. Keep assets reusable and properly named, and optimize images and graphics for performance. Use this folder for assets that are imported directly into application components or modules. Assets that need to be publicly accessible through direct URLs should be placed inside the Next.js public/ directory instead.
+
+
+==============================================================================
+tests/
+==============================================================================
+
+This folder contains all automated tests for the application, organized by testing type and responsibility. It ensures application reliability, correctness, and maintainability through different levels of testing.
+
+unit/: Tests individual functions, utilities, hooks, services, and isolated business logic to verify their expected behavior.
+component/: Tests individual React components, including rendering, user interactions, accessibility, and expected UI behavior.
+integration/: Tests interactions between multiple application modules, services, components, and data layers to ensure they work correctly together.
+e2e/: Tests complete user workflows by simulating real user interactions with the application through a browser.
+
+Keep tests organized, properly typed, independent where possible, and aligned with the application's feature-based architecture. Use descriptive test names and ensure tests cover important business logic, critical user interactions, and application workflows.
+
+Avoid duplicated test coverage, unreliable assertions, unnecessary mocking, and tests that depend on execution order. Use appropriate testing tools for each testing category.

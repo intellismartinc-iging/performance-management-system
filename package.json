@@ -1,0 +1,35 @@
+{
+  "name": "performance-management-system",
+  "version": "0.0.1",
+  "private": true,
+  "description": "HRDotNet Performance Management System monorepo",
+  "packageManager": "pnpm@12.14.0",
+  "scripts": {
+    "postinstall": "pnpm run build:packages",
+    "prepare": "husky",
+    "build:packages": "pnpm --filter \"./packages/*\" --if-present run build",
+    "dev:web": "pnpm --filter @pms/web dev",
+    "dev:backend": "pnpm --filter @pms/backend start:dev",
+    "build": "pnpm -r --if-present run build",
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm --filter @pms/shared-types --filter @pms/web --filter @pms/backend run test",
+    "format": "prettier --write \"packages/**/*.{ts,mjs,json}\" \"*.{json,md,yaml}\""
+  },
+  "lint-staged": {
+    "packages/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": "prettier --write"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "catalog:",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.0",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.46.0"
+  }
+}

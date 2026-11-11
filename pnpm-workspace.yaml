@@ -1,0 +1,20 @@
+packages:
+  - web
+  - backend
+  - packages/*
+
+# Dependencies that run an install script. true allows it, false skips it.
+allowBuilds:
+  "@scarf/scarf": false
+  bcrypt: true
+  sharp: false
+  unrs-resolver: false
+
+# One version for tools that more than one package uses. A package writes
+# "catalog:" instead of a range. backend keeps its own typescript and vitest
+# majors until its team moves them.
+catalog:
+  eslint: ^9
+  prettier: ^3.4.2
+  typescript: 5.9.3
+  zod: ^4.6.7

@@ -1,0 +1,170 @@
+/*
+ * PMS color tokens.
+ *
+ * Layer 1, "Design system palette": copied as-is from the designer's
+ * "HRDotNet Color Design System, Developer Handoff Guide" (prepared 09 Nov 2026).
+ * Do not change these values without the designer. The guide marks them as
+ * screenshot-derived and pending Figma verification.
+ *
+ * Layer 2, "PMS roles": what components read. A role points at layer 1 when the
+ * value is the same. A value marked "derived" is not in the guide: it was
+ * adjusted so text and controls meet WCAG AA contrast, or it covers dark mode,
+ * which the guide does not define.
+ *
+ * Related derived colors live in surfaces.css (canvas, panel, divider, control
+ * border, focus, scrim).
+ */
+
+/* Layer 1: design system palette. */
+:root {
+  /* Base */
+  --base-primary: #559cda;
+  --base-secondary: #ebf6fa;
+  --base-on-surface: #6d6d6d;
+  --base-on-surface-variant: #969696;
+  --base-on-primary: #ffffff;
+  --base-outline: #a8a8a8;
+  --base-outline-variant: #cccccc;
+  --base-surface: #ffffff;
+  --base-gray: #f5f5f5;
+  --base-error: #ff4b34;
+  /* Logo: all stops opaque. The gradient angle is still to be verified in Figma. */
+  --base-hrdotnet-logo: linear-gradient(
+    90deg,
+    #559cda 0%,
+    #7badff 27%,
+    #ffb58d 76%,
+    #ed8028 100%
+  );
+
+  /* Status */
+  --status-failed: #cc2e1d;
+  --status-cancelled: #ff4b34;
+  --status-success: #ffa500;
+  --status-regenerate: #00c3ca;
+  --status-filed: #9b51e0;
+  --status-posted: #559cda;
+  --status-closed: #969696;
+  --status-approved: #1e8449;
+  --status-reviewed: #ed8028;
+  --status-for-approval: #ffb703;
+
+  /* Attendance */
+  --attendance-working-hours: #4fbf73;
+  --attendance-break-time: #2e8b57;
+  --attendance-tardy: #e67a4e;
+  --attendance-undertime: #7ca68a;
+  --attendance-missing-log: #e65c5c;
+  --attendance-no-logs: #b23636;
+  --attendance-holiday: #ff9999;
+  --attendance-rest-day: #9a9a9a;
+  --attendance-leave: #ff6fb5;
+  --attendance-default-schedule: #d9b800;
+  --attendance-work-schedule: #8f8cff;
+  --attendance-change-of-schedule: #ffb24a;
+  --attendance-excess-hours: #80b8ff;
+  --attendance-overtime: #3f9dff;
+  --attendance-official-business: #b180ff;
+  --attendance-night-differential: #5c6bc0;
+  --attendance-night-differential-overtime: #3949ab;
+
+  /* Calendar. "cto" and "cos" keep the guide's names; their meanings are unconfirmed. */
+  --calendar-default-schedule: #fff9c4;
+  --calendar-work-schedule: #dad9ff;
+  --calendar-processed-logs: #dbf3e0;
+  --calendar-missing-or-no-logs: #ffc9c2;
+  --calendar-missed-log: #b6f0ed;
+  --calendar-leave: #ffd6f2;
+  --calendar-cto: #edd2b7;
+  --calendar-official-business: #e6ccff;
+  --calendar-cos: #ffdeb2;
+  --calendar-overtime: #bfe1ff;
+  --calendar-rest-day: #ebebeb;
+  --calendar-holiday: #ffe2de;
+}
+
+/* Layer 2: PMS roles. */
+:root {
+  --pms-surface: var(--base-surface);
+  --pms-text-on-action: var(--base-on-primary);
+
+  /* Derived: the logo cyan, and the navigation colors built from it. */
+  --pms-logo-blue: #01a7ec;
+  --pms-nav-selected: color-mix(in srgb, var(--pms-logo-blue) 68%, black);
+  --pms-nav-selected-hover: color-mix(in srgb, var(--pms-logo-blue) 61%, black);
+  --pms-nav-selected-pressed: color-mix(
+    in srgb,
+    var(--pms-logo-blue) 54%,
+    black
+  );
+  --pms-nav-selected-foreground: var(--base-on-primary);
+  --pms-nav-hover: color-mix(in srgb, var(--pms-logo-blue) 10%, white);
+  --pms-nav-hover-foreground: var(--pms-nav-selected-pressed);
+
+  /* Derived: a darker --base-primary, so white text on it passes 4.5 to 1. */
+  --pms-action: #205b99;
+  --pms-action-hover: #194c80;
+  --pms-action-pressed: #143d67;
+
+  /* Derived: text on the pastel status surfaces below. Same value in both themes. */
+  --pms-ink-on-tint: var(--color-slate-950);
+
+  /*
+   * Derived: the theme switch. Track and knob colors, and the sun and moon.
+   */
+  --pms-switch-track: var(--color-gray-200);
+  --pms-switch-track-on: var(--color-gray-400);
+  --pms-switch-knob: var(--base-surface);
+  --pms-switch-knob-on: var(--color-gray-800);
+  --pms-switch-sun: var(--color-amber-500);
+  --pms-switch-moon: var(--color-indigo-300);
+
+  /*
+   * Derived: feedback colors for toasts (icon and left edge) on the popover
+   * surface. Each is 3 to 1 or better against it. info uses the darker action
+   * blue and warning an amber-700, because --status-posted (2.94 to 1) and
+   * --status-reviewed (2.72 to 1) fall short on white.
+   */
+  --pms-feedback-success: var(--status-approved);
+  --pms-feedback-info: var(--pms-action);
+  --pms-feedback-warning: var(--color-amber-700);
+  --pms-feedback-error: var(--status-failed);
+
+  /*
+   * Review status tones. These are not in the designer's guide. Closest guide
+   * colors, for when the designer confirms a mapping: neutral = status-closed,
+   * active = status-posted, queued = status-filed, complete = status-approved,
+   * alert = status-failed or status-cancelled.
+   */
+  /* Draft, Not Started, Archived */
+  --pms-review-neutral-surface: #f0f3f6;
+  --pms-review-neutral-accent: #8897a4;
+  /* Active, In Progress */
+  --pms-review-active-surface: #eaf4fd;
+  --pms-review-active-accent: #5295ce;
+  /* Scheduled, Submitted */
+  --pms-review-queued-surface: #efedff;
+  --pms-review-queued-accent: #8d75c8;
+  /* Completed, Published */
+  --pms-review-complete-surface: #e4f7ee;
+  --pms-review-complete-accent: #369773;
+  /* Overdue, Cancelled */
+  --pms-review-alert-surface: #ffece9;
+  --pms-review-alert-accent: #ca6d5d;
+}
+
+/* Dark theme. The guide defines light colors only, so these are derived. */
+.dark {
+  --pms-action: var(--base-primary);
+  --pms-action-hover: #77aee3;
+  --pms-action-pressed: #91bfeb;
+  --pms-text-on-action: #0f172a;
+  --pms-nav-hover: #18374a;
+  --pms-nav-hover-foreground: #d8ecff;
+
+  /* Feedback on the dark popover (#253247): the light values fall below 3 to 1 there. */
+  --pms-feedback-success: var(--color-green-400);
+  --pms-feedback-info: var(--base-primary);
+  --pms-feedback-warning: var(--status-reviewed);
+  --pms-feedback-error: var(--color-red-400);
+}

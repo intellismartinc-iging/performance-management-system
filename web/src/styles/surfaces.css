@@ -1,0 +1,49 @@
+/* Borders separate resting surfaces. Shadows identify floating layers. */
+:root {
+  --pms-canvas: #f8fafc;
+  --pms-panel: var(--pms-surface);
+  --pms-floating: var(--pms-surface);
+  --pms-divider: #dbe2ea;
+  --pms-control-border: #778699;
+  --pms-focus: #205b99;
+  --pms-scrim: rgb(15 23 42 / 50%);
+}
+
+.dark {
+  --pms-canvas: #111827;
+  --pms-panel: #1b2534;
+  --pms-floating: #253247;
+  --pms-divider: #41516a;
+  --pms-control-border: #8394ad;
+  --pms-focus: #a9d4ff;
+  --pms-scrim: rgb(2 6 23 / 65%);
+}
+
+@theme {
+  --radius-pms-tag: 0.25rem;
+  --radius-pms-control: 0.5rem;
+  --radius-pms-card: 0.75rem;
+  --radius-pms-overlay: 1rem;
+
+  --shadow-pms-float:
+    0 2px 4px rgb(15 23 42 / 12%), 0 6px 12px rgb(15 23 42 / 10%);
+  --shadow-pms-overlay:
+    0 4px 8px rgb(15 23 42 / 14%), 0 12px 24px rgb(15 23 42 / 16%);
+}
+
+:where(
+  :focus-visible:not([data-slot="input-group"] > [data-slot="input-group-control"]),
+  [data-slot="input-group"]:has(> [data-slot="input-group-control"]:focus-visible)
+) {
+  outline: 3px solid var(--pms-focus);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  :where(
+    :focus-visible:not([data-slot="input-group"] > [data-slot="input-group-control"]),
+    [data-slot="input-group"]:has(> [data-slot="input-group-control"]:focus-visible)
+  ) {
+    outline-color: Highlight;
+  }
+}
