@@ -48,14 +48,18 @@ jobs:
             echo "filter=...[$base]" >> "$GITHUB_OUTPUT"
           fi
 
+      # Every step below excludes the root project. `...[<base>]` selects it when
+      # a root file changed, and its scripts (build, lint, typecheck, test) run
+      # every package. That defeats the affected-only scope, and its test script
+      # runs the failing backend tests.
       - name: Typecheck
-        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run typecheck
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --filter "!performance-management-system" --if-present run typecheck
 
       - name: Lint
-        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run lint
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --filter "!performance-management-system" --if-present run lint
 
       - name: Build
-        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run build
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --filter "!performance-management-system" --if-present run build
 
       # backend and database are left out: their tests failed before the
       # monorepo move (database schema.test.mjs, and 8 tests in the backend
@@ -63,5 +67,6 @@ jobs:
       - name: Test
         run: >
           pnpm --filter "${{ steps.scope.outputs.filter }}"
+          --filter "!performance-management-system"
           --filter "!@pms/backend" --filter "!@pms/database"
           --if-present run test
