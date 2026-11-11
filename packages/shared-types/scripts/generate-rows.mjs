@@ -197,7 +197,11 @@ if (existsSync(OUT_DIR)) {
 }
 for (const [name, content] of files) {
   const path = join(OUT_DIR, name);
-  const current = existsSync(path) ? readFileSync(path, "utf8") : null;
+  // Git on Windows checks files out with CRLF (core.autocrlf). Compare the text
+  // without the line ending, or the check fails on a fresh checkout there.
+  const current = existsSync(path)
+    ? readFileSync(path, "utf8").replace(/\r\n/g, "\n")
+    : null;
   if (current !== content) {
     stale = true;
     if (!CHECK_ONLY) {
