@@ -1,0 +1,35 @@
+/* Dashboard typography */
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Page and section titles scale from 320px to 1440px. */
+  --text-pms-page-title: clamp(1.25rem, 1.1786rem + 0.3571vw, 1.5rem);
+  --text-pms-page-title--line-height: 1.3;
+  --text-pms-page-title--letter-spacing: -0.02em;
+  --text-pms-page-title--font-weight: 600;
+
+  --text-pms-section-title: clamp(1rem, 0.9286rem + 0.3571vw, 1.25rem);
+  --text-pms-section-title--line-height: 1.4;
+  --text-pms-section-title--letter-spacing: -0.01em;
+  --text-pms-section-title--font-weight: 600;
+
+  --text-pms-metric: 1.5rem;
+  --text-pms-metric--line-height: 1.25;
+  --text-pms-metric--font-weight: 600;
+
+  --text-pms-body: 1rem;
+  --text-pms-body--line-height: 1.6;
+  --text-pms-body--font-weight: 400;
+
+  --text-pms-table: 0.875rem;
+  --text-pms-table--line-height: 1.5;
+  --text-pms-table--font-weight: 400;
+
+  --text-pms-label: 0.8125rem;
+  --text-pms-label--line-height: 1.5;
+  --text-pms-label--font-weight: 500;
+
+  --container-pms-copy: 65ch;
+}

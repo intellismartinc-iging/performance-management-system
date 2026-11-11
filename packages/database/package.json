@@ -1,0 +1,14 @@
+{
+  "name": "@pms/database",
+  "version": "0.0.1",
+  "private": true,
+  "description": "PostgreSQL schema, seed data, and the init script",
+  "type": "module",
+  "scripts": {
+    "db:init": "node init-db.mjs",
+    "test": "node --test schema.test.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}

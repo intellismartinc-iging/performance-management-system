@@ -1,4 +1,17 @@
 .agents/
 .claude/
+.codex/
 .docs/
 .sauron/
+
+node_modules/
+dist/
+.next/
+.env*
+!.env.example
+*.tsbuildinfo
+.pnpm-store/
+coverage/
+
+# Output of the progress-report command
+progress-report-result.md

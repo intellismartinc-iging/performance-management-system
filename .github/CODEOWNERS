@@ -1,0 +1,20 @@
+# Owners per path. A pull request that changes a path asks its owners for review.
+#
+# Owners: PMS Iging (GitHub @intellismartinc-iging) and PMS Hersvin (GitHub @vin).
+# GitHub ignores an owner it cannot find, so check both handles. Each owner needs
+# write access to the repository.
+#
+# Edit this file as plain text. A Markdown editor or preview rewrites the lines.
+# Every pattern starts with a slash, and every folder in the root is listed, so
+# no path is left without an owner.
+
+/web/                    @intellismartinc-iging @vin
+/backend/                @intellismartinc-iging @vin
+/packages/               @intellismartinc-iging @vin
+/docs/                   @intellismartinc-iging @vin
+/.github/                @intellismartinc-iging @vin
+/.husky/                 @intellismartinc-iging @vin
+
+# Every file in the root: package.json, pnpm-workspace.yaml, pnpm-lock.yaml,
+# tsconfig.base.json, eslint.config.mjs, and so forth.
+/*                       @intellismartinc-iging @vin

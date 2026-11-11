@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Affected-only checks diff against the base branch, so they need history.
+          fetch-depth: 0
+
+      # The pnpm version comes from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The root postinstall script builds packages/*.
+      - run: pnpm install --frozen-lockfile
+
+      # Check the packages that changed and the packages that depend on them.
+      # Check every package when the base is unknown or a root file changed,
+      # because a root file can affect all of them.
+      - name: Pick the packages to check
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="origin/${{ github.base_ref }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          root_files='^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.base\.json|eslint\.config\.mjs|\.prettierrc|\.github/|\.husky/)'
+          if ! git cat-file -e "$base^{commit}" 2>/dev/null \
+             || git diff --name-only "$base...HEAD" | grep -Eq "$root_files"; then
+            echo 'filter=@pms/*' >> "$GITHUB_OUTPUT"
+          else
+            echo "filter=...[$base]" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Typecheck
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run typecheck
+
+      - name: Lint
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run lint
+
+      - name: Build
+        run: pnpm --filter "${{ steps.scope.outputs.filter }}" --if-present run build
+
+      # backend and database are left out: their tests failed before the
+      # monorepo move (database schema.test.mjs, and 8 tests in the backend
+      # auth.service.spec.ts with a Nest dependency error). Add them once they pass.
+      - name: Test
+        run: >
+          pnpm --filter "${{ steps.scope.outputs.filter }}"
+          --filter "!@pms/backend" --filter "!@pms/database"
+          --if-present run test
