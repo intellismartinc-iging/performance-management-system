@@ -14,24 +14,32 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import type { Request } from "express";
+import type { AuthedUser } from "../../employees/types/authed-user.types.js";
 import { JwtAuthGuard } from "../../../common/guards/jwt-auth.guard.js";
 import { ApiErrorResponseDto } from "../../../common/dtos/api-response.dto.js";
+import { AdminRoleGuard } from "../../employees/guards/admin-role.guard.js";
 import { CreateKpiGoalTemplateDto } from "../dtos/create-kpi-goal-template.dto.js";
 import { UpdateKpiGoalTemplateDto } from "../dtos/update-kpi-goal-template.dto.js";
 import { KpiGoalTemplate } from "../entities/kpi-goal-template.entity.js";
 import { KpiGoalsService } from "../services/kpi-goals.service.js";
 
+/** The request after `JwtAuthGuard`: the JWT strategy sets `user`. */
+interface AuthedRequest {
+  user: AuthedUser;
+}
+
 @ApiTags("KPI Goals")
 @Controller("kpi-goals")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminRoleGuard)
 @ApiBearerAuth()
+@ApiForbiddenResponse({ description: "Admin role required", type: ApiErrorResponseDto })
 export class KpiGoalsController {
   constructor(private readonly service: KpiGoalsService) {}
 
@@ -45,6 +53,16 @@ export class KpiGoalsController {
   @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
   async list() {
     return this.service.list();
+  }
+
+  // Declared before ":id": a route declared later would never match, because
+  // ":id" catches "positions" first.
+  @Get("positions")
+  @ApiOperation({ summary: "list the positions of your company for the template editor" })
+  @ApiOkResponse({ description: "positions of the caller's company" })
+  @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
+  async listPositions(@Req() req: AuthedRequest) {
+    return this.service.listPositions(req.user.userId);
   }
 
   @Get(":id")
@@ -90,9 +108,8 @@ export class KpiGoalsController {
   @ApiOkResponse({ description: "template created with draft version 1" })
   @ApiBadRequestResponse({ description: "Bad Request", type: ApiErrorResponseDto })
   @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
-  async create(@Body() dto: CreateKpiGoalTemplateDto, @Req() req: Request) {
-    const user = (req as unknown as { user: { id: string } }).user;
-    return this.service.create(dto, user.id);
+  async create(@Body() dto: CreateKpiGoalTemplateDto, @Req() req: AuthedRequest) {
+    return this.service.create(dto, req.user.userId);
   }
 
   @Post(":id/update")
@@ -109,6 +126,24 @@ export class KpiGoalsController {
     return this.service.update(templateId, dto);
   }
 
+  @Post(":id/versions")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "edit a published template: publish its next version, and keep the old one",
+  })
+  @ApiOkResponse({ description: "the template with its new version" })
+  @ApiBadRequestResponse({ description: "Bad Request", type: ApiErrorResponseDto })
+  @ApiConflictResponse({ description: "template is not published" })
+  @ApiNotFoundResponse({ description: "template not found", type: ApiErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
+  async createVersion(
+    @Param("id", new ParseUUIDPipe()) templateId: string,
+    @Body() dto: UpdateKpiGoalTemplateDto,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.service.createVersion(templateId, dto, req.user.userId);
+  }
+
   @Post(":id/published")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -118,9 +153,8 @@ export class KpiGoalsController {
   @ApiConflictResponse({ description: "template is not in draft state" })
   @ApiNotFoundResponse({ description: "template not found", type: ApiErrorResponseDto })
   @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
-  async publish(@Param("id", new ParseUUIDPipe()) templateId: string, @Req() req: Request) {
-    const user = (req as unknown as { user: { id: string } }).user;
-    return this.service.publish(templateId, user.id);
+  async publish(@Param("id", new ParseUUIDPipe()) templateId: string, @Req() req: AuthedRequest) {
+    return this.service.publish(templateId, req.user.userId);
   }
 
   @Post(":id/archived")

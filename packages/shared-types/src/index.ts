@@ -1,4 +1,7 @@
 export * from "./common.js";
+export * from "./rules/kpi-matrix.js";
+export * from "./rules/kpi-target.js";
+export * from "./rules/kpi-weights.js";
 export * from "./domain/index.js";
 export * from "./dtos/auth.schema.js";
 export * from "./dtos/behavioral-template.schema.js";

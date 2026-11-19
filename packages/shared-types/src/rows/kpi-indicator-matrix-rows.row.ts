@@ -6,6 +6,7 @@ import { idSchema } from "../common.js";
 export const kpiIndicatorMatrixRowsRowSchema = z.object({
   rowId: idSchema,
   indicatorId: idSchema,
-  rowLabel: z.string(),
+  rowLabel: z.string().nullable(),
+  position: z.number().int(),
 });
 export type KpiIndicatorMatrixRowsRow = z.infer<typeof kpiIndicatorMatrixRowsRowSchema>;

@@ -32,6 +32,7 @@ Apply to every request that writes or changes code. No trigger is needed. `/lean
 - Apply `security-best-practices` during every module or feature implementation when the skill is available. Validate external input at the server boundary, enforce authorization where data is accessed or changed, parameterize database queries, and keep secrets out of code, logs, and client responses. Check cookie flags and token handling when the change affects authentication.
 - Before reporting a module complete, use `security-auditor` to review all affected layers. If the skill is unavailable, perform the review manually. Check authentication, authorization, input handling, sensitive data, and changed dependencies as applicable. Report verified findings with severity and file references, and state which checks remain unverified.
 - Use named skills when available. Apply the rules in these tracked instructions even when a skill is missing from the local install.
+- Get a second review (a reviewer agent, a senior developer, or a stronger model) before you commit to an approach on a complex change: work across workspaces, an access rule or schema decision, a new shared contract, or a bug that resists a first fix. Get it again before you report the work complete.
 
 ## Project rules
 
@@ -121,3 +122,9 @@ export type CycleStatus = z.infer<typeof cycleStatusSchema>;
 - One logical change per commit. Present tense, active voice, no emojis.
 - Commit and push only when the user asks.
 - Reviewers: the owners in `.github/CODEOWNERS`.
+
+## Handoff
+
+- When a module or feature is complete, write or update its handoff in `docs/handoffs/` before you report the work complete. One handoff per module or feature: update the same file as the work continues, and do not add a new file for each session. Add a row to `docs/handoffs/README.md` only when you create a file.
+- Write it for the next developer or agent who takes over: the objective, the current state with verified test results, each decision with its reason, the dead ends, the file inventory with status, the exact constraints and corrections, the open items and gaps, and a ready-to-paste opening prompt. Mark anything you did not run or verify as unverified. Invent no state.
+- The handoff follows the `handoff` skill when it is available. It states the state of the work and never narrates the session.

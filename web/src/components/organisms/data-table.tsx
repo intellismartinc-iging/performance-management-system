@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -190,9 +191,15 @@ export function DataTable<Row>({
           <TableRow>
             <TableCell
               colSpan={columnCount}
-              className="py-6 text-center whitespace-normal text-muted-foreground"
+              className={emptyState == null ? "p-0 whitespace-normal" : "py-6 text-center whitespace-normal text-muted-foreground"}
             >
-              {emptyState ?? emptyMessage}
+              {emptyState ?? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>{emptyMessage}</EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </TableCell>
           </TableRow>
         ) : (

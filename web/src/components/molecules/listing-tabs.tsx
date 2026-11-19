@@ -31,13 +31,13 @@ export function ListingTabs<Value extends string>({
       <TabsList
         variant="line"
         aria-label={label}
-        className="h-auto max-w-full flex-wrap justify-start"
+        className="max-w-full flex-wrap justify-start p-0 group-data-horizontal/tabs:h-auto"
       >
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="min-h-pms-touch flex-none px-3 text-pms-label"
+            className="min-h-pms-touch flex-none px-3 text-pms-label group-data-horizontal/tabs:after:-bottom-px"
           >
             {tab.label}
             {tab.count !== undefined && (

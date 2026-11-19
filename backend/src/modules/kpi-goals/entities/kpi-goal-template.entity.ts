@@ -21,6 +21,14 @@ export class KpiGoalTemplate {
   @Column({ name: 'company_id', type: 'bigint' })
   companyId: string;
 
+  @ApiProperty({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
+
+  @ApiProperty({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
   @ApiProperty({ enum: ['draft', 'published', 'archived'] })
   @Column({ type: 'text' })
   status: 'draft' | 'published' | 'archived';

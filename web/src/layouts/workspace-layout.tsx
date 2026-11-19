@@ -365,6 +365,7 @@ export function WorkspaceLayout({
 
   return (
     <SidebarProvider
+      className="h-dvh"
       enableKeyboardShortcut={false}
       open={isSidebarOpen}
       onOpenChange={setSidebarOpen}
@@ -376,7 +377,7 @@ export function WorkspaceLayout({
         }
       />
       <SidebarInset className="min-w-0">
-        <header className="grid min-h-pms-header grid-cols-[var(--spacing-pms-touch)_minmax(0,1fr)_var(--spacing-pms-touch)] items-center gap-2 border-b px-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <header className="grid min-h-pms-header shrink-0 grid-cols-[var(--spacing-pms-touch)_minmax(0,1fr)_var(--spacing-pms-touch)] items-center gap-2 border-b bg-background px-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className="col-start-1 row-start-1 lg:hidden">
             <SidebarTrigger
               aria-label="Open navigation"
@@ -447,7 +448,9 @@ export function WorkspaceLayout({
             )}
           </div>
         </header>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

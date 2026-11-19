@@ -20,6 +20,7 @@ import { KpiIndicator } from "./modules/kpi-goals/entities/kpi-indicator.entity.
 import { KpiIndicatorScale } from "./modules/kpi-goals/entities/kpi-indicator-scale.entity.js";
 import { KpiIndicatorMatrixRow } from "./modules/kpi-goals/entities/kpi-indicator-matrix-row.entity.js";
 import { KpiIndicatorMatrixColumn } from "./modules/kpi-goals/entities/kpi-indicator-matrix-column.entity.js";
+import { KpiIndicatorMatrixCell } from "./modules/kpi-goals/entities/kpi-indicator-matrix-cell.entity.js";
 import { HREmployee, HREmploymentRecord, HRUser } from "./modules/auth/entities/hrdotnet.entity.js";
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -51,6 +52,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
           KpiIndicatorScale,
           KpiIndicator,
           KpiIndicatorMatrixColumn,
+          KpiIndicatorMatrixCell,
           KpiIndicatorMatrixRow,
         ],
         synchronize: true,

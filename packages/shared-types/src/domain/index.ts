@@ -2,6 +2,8 @@ export * from "./employee-status.enum.js";
 export * from "./manager-assignment-status.enum.js";
 export * from "./template-version-status.enum.js";
 export * from "./kpi-direction.enum.js";
+export * from "./matrix-kind.enum.js";
+export * from "./scale-bound.enum.js";
 export * from "./behavioral-question-type.enum.js";
 export * from "./review-type.enum.js";
 export * from "./cycle-status.enum.js";
