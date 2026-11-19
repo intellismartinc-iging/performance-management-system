@@ -83,16 +83,18 @@ Invariants: no self-assignment (employee_id = manager_id), same-company match, n
 
 ### 4.1 kpi_goal_templates
 
-| Column                     | Type              | Notes                    |
-| -------------------------- | ----------------- | ------------------------ |
-| template_id                | uuid PK           |                          |
-| position_id                | uuid FK positions |                          |
-| company_id                 | uuid FK           |                          |
-| status                     | text              | draft/published/archived |
-| current_version            | integer           |                          |
-| published_by, published_at | uuid/timestamptz  |                          |
-| archived_at                | timestamptz       |                          |
-| created_at, updated_at     | timestamptz       |                          |
+| Column                     | Type              | Notes                                                        |
+| -------------------------- | ----------------- | ------------------------------------------------------------ |
+| template_id                | uuid PK           |                                                              |
+| position_id                | uuid FK positions |                                                              |
+| company_id                 | uuid FK           |                                                              |
+| name                       | text              | Required in the API for a new template. NULL for older rows. |
+| description                | text              | Optional                                                     |
+| status                     | text              | draft/published/archived                                     |
+| current_version            | integer           |                                                              |
+| published_by, published_at | uuid/timestamptz  |                                                              |
+| archived_at                | timestamptz       |                                                              |
+| created_at, updated_at     | timestamptz       |                                                              |
 
 ### 4.2 kpi_template_versions
 
@@ -111,42 +113,58 @@ Immutable. One row per published/draft version.
 
 Belong to a template version. Stable identity per indicator row.
 
-| Column             | Type                          | Notes                                              |
-| ------------------ | ----------------------------- | -------------------------------------------------- |
-| indicator_id       | uuid PK                       |                                                    |
-| version_id         | uuid FK kpi_template_versions |                                                    |
-| name               | text                          |                                                    |
-| description        | text                          |                                                    |
-| unit               | text                          |                                                    |
-| target             | numeric                       | Nonnegative                                        |
-| direction          | text                          | higher_is_better / lower_is_better                 |
-| weight             | numeric(5,2)                  | Positive, all indicators in one version total 100% |
-| score_target_met   | integer 1-5                   |                                                    |
-| score_below_target | integer 1-5                   |                                                    |
-| use_for_scoring    | boolean                       | Tpl-G-004 toggle                                   |
+| Column             | Type                          | Notes                                                                           |
+| ------------------ | ----------------------------- | ------------------------------------------------------------------------------- |
+| indicator_id       | uuid PK                       |                                                                                 |
+| version_id         | uuid FK kpi_template_versions |                                                                                 |
+| name               | text                          |                                                                                 |
+| description        | text                          |                                                                                 |
+| unit               | text                          |                                                                                 |
+| target             | numeric                       | Nonnegative                                                                     |
+| direction          | text                          | higher_is_better / lower_is_better                                              |
+| weight             | numeric(5,2)                  | Positive, all indicators in one version total 100%                              |
+| score_target_met   | numeric(3,2) 1-5              |                                                                                 |
+| score_below_target | numeric(3,2) 1-5              |                                                                                 |
+| matrix_kind        | text                          | none / table / scale. Default none                                              |
+| matrix_title       | text                          | Required in the API when matrix_kind is not none                                |
+| scale_bound        | text                          | minimum / maximum. Required in the API for a scale                              |
+| use_for_scoring    | boolean                       | Tpl-G-004 toggle. True only on a scale: the scale sets the score. Default false |
 
 ### 4.4 kpi_indicator_scales
 
-Scoring boundary mapping. One row per threshold band per indicator.
+Numeric threshold scale (Tpl-G-005). One row per threshold, in threshold order.
+A minimum scale uses lower_bound (inclusive) and the first row is 0. A maximum scale uses
+upper_bound (inclusive), and its final row has no upper limit, so both bounds are NULL.
 
-| Column       | Type                   | Notes                                       |
-| ------------ | ---------------------- | ------------------------------------------- |
-| scale_id     | uuid PK                |                                             |
-| indicator_id | uuid FK kpi_indicators |                                             |
-| lower_bound  | numeric                | Inclusive                                   |
-| upper_bound  | numeric                | Inclusive, NULL means unbounded final range |
-| score        | integer 1-5            |                                             |
+| Column       | Type                   | Notes                                                                                      |
+| ------------ | ---------------------- | ------------------------------------------------------------------------------------------ |
+| scale_id     | uuid PK                |                                                                                            |
+| indicator_id | uuid FK kpi_indicators |                                                                                            |
+| lower_bound  | numeric                | Minimum actual, inclusive. NULL on a maximum scale                                         |
+| upper_bound  | numeric                | Maximum actual, inclusive. NULL on a minimum scale and on the final row of a maximum scale |
+| label        | text                   | Rating label. Required in the API                                                          |
+| score        | numeric(3,2) 1-5       | At most two decimals                                                                       |
 
 ### 4.5 kpi_indicator_matrix_rows / columns
 
-Flexible reference matrix (custom rows/columns).
+Custom reference table (Tpl-G-004). It never changes scoring.
 
-| Column               | Type    | Notes                   |
-| -------------------- | ------- | ----------------------- |
-| row_id / col_id      | uuid PK |                         |
-| indicator_id         | uuid FK |                         |
-| row_label, col_label | text    |                         |
-| cell_value           | text    | At reference cell level |
+| Column               | Type    | Notes                                                |
+| -------------------- | ------- | ---------------------------------------------------- |
+| row_id / col_id      | uuid PK |                                                      |
+| indicator_id         | uuid FK |                                                      |
+| row_label, col_label | text    | A row has no label in the builder: row_label is NULL |
+| position             | integer | Order of the row or column within the indicator      |
+
+### 4.6 kpi_indicator_matrix_cells
+
+The text in one cell: one row for each row and column of a table.
+
+| Column | Type                                 | Notes          |
+| ------ | ------------------------------------ | -------------- |
+| row_id | uuid FK kpi_indicator_matrix_rows    | PK with col_id |
+| col_id | uuid FK kpi_indicator_matrix_columns | PK with row_id |
+| value  | text                                 |                |
 
 ---
 

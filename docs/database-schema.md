@@ -81,7 +81,7 @@ Application invariants: no self-assignment, employee and manager must belong to 
 
 ### 5.1 `kpi_goal_templates`
 
-Template identity and lifecycle: `template_id` UUID PK, `position_id` FK, `company_id` FK, `status` (`draft`, `published`, `archived`), `current_version`, `published_by`, `published_at`, `archived_at`, timestamps.
+Template identity and lifecycle: `template_id` UUID PK, `position_id` FK, `company_id` FK, nullable `name` (required in the API for a new template) and `description`, `status` (`draft`, `published`, `archived`), `current_version`, `published_by`, `published_at`, `archived_at`, timestamps.
 
 ### 5.2 `kpi_template_versions`
 
@@ -89,15 +89,15 @@ Immutable version records: `version_id` UUID PK, `template_id` FK, `version` int
 
 ### 5.3 `kpi_indicators`
 
-Indicator rows belong to a template version: `indicator_id` UUID PK, `version_id` FK, `name`, `description`, `unit`, nonnegative numeric `target`, `direction` (`higher_is_better` / `lower_is_better`), positive `weight` (`numeric(5,2)`), `score_target_met` integer 1–5, `score_below_target` integer 1–5, and `use_for_scoring` boolean.
+Indicator rows belong to a template version: `indicator_id` UUID PK, `version_id` FK, `name`, `description`, `unit`, nonnegative numeric `target`, `direction` (`higher_is_better` / `lower_is_better`), positive `weight` (`numeric(5,2)`), `score_target_met` `numeric(3,2)` 1–5, `score_below_target` `numeric(3,2)` 1–5, `matrix_kind` (`none`, `table`, `scale`; default `none`), nullable `matrix_title` and `scale_bound` (`minimum`, `maximum`), and `use_for_scoring` boolean (default false; true only when the indicator has a scale that sets the score).
 
 ### 5.4 `kpi_indicator_scales`
 
-One row per threshold band: `scale_id` UUID PK, `indicator_id` FK, inclusive `lower_bound`, inclusive `upper_bound` (NULL for the final unbounded range), and `score` integer 1–5.
+One row per threshold of a numeric threshold scale, in threshold order: `scale_id` UUID PK, `indicator_id` FK, `label`, `score` `numeric(3,2)` 1–5, and one bound. A minimum scale uses `lower_bound` (inclusive, the first row is 0). A maximum scale uses `upper_bound` (inclusive), and its final row has neither, which means no upper limit.
 
 ### 5.5 `kpi_indicator_matrix_rows` and `kpi_indicator_matrix_columns`
 
-Flexible reference-matrix structure associated with an indicator. The supplied design identifies row/column IDs, indicator FK, row/column labels and reference cell values. Confirm the exact physical cell representation and uniqueness keys during migration design.
+A custom reference table of an indicator: `kpi_indicator_matrix_columns` (`col_id`, `indicator_id`, `col_label`, `position`), `kpi_indicator_matrix_rows` (`row_id`, `indicator_id`, nullable `row_label`, `position`), and `kpi_indicator_matrix_cells` (`row_id`, `col_id`, `value`, primary key `(row_id, col_id)`). A table never changes scoring.
 
 Published template versions and their scoring criteria must not be mutated after being frozen. Existing cycle snapshots remain unchanged when a later template version is published.
 

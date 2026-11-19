@@ -257,6 +257,7 @@ Fonts: Inter for body and headings (`--font-sans`, `--font-heading`, from `--fon
 | Token | Value | Use |
 | --- | --- | --- |
 | `container-pms-dashboard` | `90rem` (1440 px) | Maximum content width |
+| `container-pms-form` | `53rem` (848 px) | Width of a builder form column, as in the legacy builder. Use `max-w-pms-form`. |
 | `spacing-pms-gutter` | `clamp(1rem, 4vw, 2rem)` | Side padding |
 | `spacing-pms-section` | `clamp(1.5rem, 4vw, 3rem)` | Space between page sections |
 | `spacing-pms-header` | `4rem` (64 px) | Header height |
