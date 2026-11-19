@@ -5,8 +5,10 @@ import type {
   EvaluatorType,
   GoalStatus,
   KpiDirection,
+  MatrixKind,
   NteStatus,
   PipStatus,
+  ScaleBound,
   TemplateVersionStatus,
 } from "@pms/shared-types";
 
@@ -113,6 +115,17 @@ export const KPI_DIRECTION_LABELS = {
   higher_is_better: "Higher is better",
   lower_is_better: "Lower is better",
 } as const satisfies Record<KpiDirection, string>;
+
+export const MATRIX_KIND_LABELS = {
+  none: "No matrix",
+  table: "Custom reference table",
+  scale: "Numeric threshold scale",
+} as const satisfies Record<MatrixKind, string>;
+
+export const SCALE_BOUND_LABELS = {
+  minimum: "Minimum actual (inclusive)",
+  maximum: "Maximum actual (inclusive)",
+} as const satisfies Record<ScaleBound, string>;
 
 export const BEHAVIORAL_QUESTION_TYPE_LABELS = {
   rating_scale: "Rating (1 to 5)",

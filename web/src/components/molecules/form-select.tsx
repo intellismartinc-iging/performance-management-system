@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 
 interface FormSelectProps<Value extends string> {
+  /** Set it when an error summary must link to this control. */
+  id?: string;
   label: string;
   value: Value | null;
   options: readonly { value: Value; label: string }[];
@@ -27,6 +29,7 @@ interface FormSelectProps<Value extends string> {
 }
 
 export function FormSelect<Value extends string>({
+  id: idProp,
   label,
   value,
   options,
@@ -36,7 +39,8 @@ export function FormSelect<Value extends string>({
   required,
   disabled,
 }: FormSelectProps<Value>) {
-  const id = useId();
+  const generatedId = useId();
+  const id = idProp ?? generatedId;
   const descriptionId = `${id}-description`;
   const errorId = `${id}-error`;
   const describedBy =
