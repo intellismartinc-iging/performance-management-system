@@ -14,4 +14,8 @@ export class KpiIndicatorMatrixColumn {
   @ApiProperty()
   @Column({ name: 'col_label', type: 'text' })
   colLabel: string;
+
+  @ApiProperty()
+  @Column({ type: 'integer', default: 0 })
+  position: number;
 }

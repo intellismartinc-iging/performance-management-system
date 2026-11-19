@@ -1,4 +1,5 @@
 import type { KpiGoalTemplate } from "../entities/kpi-goal-template.entity.js";
+import type { KpiIndicatorMatrixCell } from "../entities/kpi-indicator-matrix-cell.entity.js";
 import type { KpiIndicatorMatrixColumn } from "../entities/kpi-indicator-matrix-column.entity.js";
 import type { KpiIndicatorMatrixRow } from "../entities/kpi-indicator-matrix-row.entity.js";
 import type { KpiIndicatorScale } from "../entities/kpi-indicator-scale.entity.js";
@@ -13,4 +14,5 @@ export interface TemplateTree {
   scales: KpiIndicatorScale[];
   matrixRows: KpiIndicatorMatrixRow[];
   matrixColumns: KpiIndicatorMatrixColumn[];
+  matrixCells: KpiIndicatorMatrixCell[];
 }

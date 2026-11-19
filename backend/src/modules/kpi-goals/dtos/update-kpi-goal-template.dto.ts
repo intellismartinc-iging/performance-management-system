@@ -1,22 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { IndicatorDto } from './kpi-indicator.dto.js';
+import { CreateKpiGoalTemplateDto } from './create-kpi-goal-template.dto.js';
 
-export class UpdateKpiGoalTemplateDto {
-  @ApiProperty({
-    required: false,
-    nullable: true,
-    format: 'uuid',
-    description: 'Optional position scope. Null means company-wide.',
-  })
-  @IsOptional()
-  @IsUUID()
-  positionId?: string | null;
-
-  @ApiProperty({ type: [IndicatorDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => IndicatorDto)
-  indicators: IndicatorDto[];
-}
+/** The same body as create: a template keeps its company, which the server sets. */
+export class UpdateKpiGoalTemplateDto extends CreateKpiGoalTemplateDto {}

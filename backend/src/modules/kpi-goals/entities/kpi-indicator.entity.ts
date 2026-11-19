@@ -5,6 +5,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import type { MatrixKind, ScaleBound } from '@pms/shared-types';
 import { KpiIndicatorScale } from './kpi-indicator-scale.entity.js';
 import { KpiIndicatorMatrixRow } from './kpi-indicator-matrix-row.entity.js';
 import { KpiIndicatorMatrixColumn } from './kpi-indicator-matrix-column.entity.js';
@@ -51,15 +52,27 @@ export class KpiIndicator {
   weight: number;
 
   @ApiProperty()
-  @Column({ name: 'score_target_met', type: 'integer' })
+  @Column({ name: 'score_target_met', type: 'numeric', precision: 3, scale: 2 })
   scoreTargetMet: number;
 
   @ApiProperty()
-  @Column({ name: 'score_below_target', type: 'integer' })
+  @Column({ name: 'score_below_target', type: 'numeric', precision: 3, scale: 2 })
   scoreBelowTarget: number;
 
-  @ApiProperty({ default: true })
-  @Column({ name: 'use_for_scoring', type: 'boolean', default: true })
+  @ApiProperty({ enum: ['none', 'table', 'scale'], default: 'none' })
+  @Column({ name: 'matrix_kind', type: 'text', default: 'none' })
+  matrixKind: MatrixKind;
+
+  @ApiProperty({ nullable: true })
+  @Column({ name: 'matrix_title', type: 'text', nullable: true })
+  matrixTitle: string | null;
+
+  @ApiProperty({ enum: ['minimum', 'maximum'], nullable: true })
+  @Column({ name: 'scale_bound', type: 'text', nullable: true })
+  scaleBound: ScaleBound | null;
+
+  @ApiProperty({ default: false, description: 'True: the scale sets the score. Only a scale may score.' })
+  @Column({ name: 'use_for_scoring', type: 'boolean', default: false })
   useForScoring: boolean;
 
   @ApiProperty({ isArray: true })
