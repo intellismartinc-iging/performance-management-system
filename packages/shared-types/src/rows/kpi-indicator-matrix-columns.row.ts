@@ -7,5 +7,6 @@ export const kpiIndicatorMatrixColumnsRowSchema = z.object({
   colId: idSchema,
   indicatorId: idSchema,
   colLabel: z.string(),
+  position: z.number().int(),
 });
 export type KpiIndicatorMatrixColumnsRow = z.infer<typeof kpiIndicatorMatrixColumnsRowSchema>;

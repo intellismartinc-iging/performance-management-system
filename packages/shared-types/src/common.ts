@@ -8,7 +8,12 @@ import { z } from "zod";
  * schemas, so a valid server response is never rejected by a UI rule.
  */
 
-export const idSchema = z.uuid();
+/**
+ * A `uuid` column. It accepts any GUID of 8-4-4-4-12 hex digits, not only RFC 4122
+ * versions: PostgreSQL stores both, and the dev fixtures use ids such as
+ * 00000000-0000-0000-0000-000000000021, which `z.uuid()` rejects.
+ */
+export const idSchema = z.guid();
 
 /**
  * Id of a table whose key is `bigint` (companies, departments, positions,

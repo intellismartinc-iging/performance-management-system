@@ -2,6 +2,8 @@
 import { z } from "zod";
 import { decimalSchema, idSchema } from "../common.js";
 import { kpiDirectionSchema } from "../domain/kpi-direction.enum.js";
+import { matrixKindSchema } from "../domain/matrix-kind.enum.js";
+import { scaleBoundSchema } from "../domain/scale-bound.enum.js";
 
 /** One row of pms.kpi_indicators. */
 export const kpiIndicatorsRowSchema = z.object({
@@ -13,8 +15,11 @@ export const kpiIndicatorsRowSchema = z.object({
   target: decimalSchema.nullable(),
   direction: kpiDirectionSchema,
   weight: decimalSchema,
-  scoreTargetMet: z.number().int(),
-  scoreBelowTarget: z.number().int(),
+  scoreTargetMet: decimalSchema,
+  scoreBelowTarget: decimalSchema,
+  matrixKind: matrixKindSchema,
+  matrixTitle: z.string().nullable(),
+  scaleBound: scaleBoundSchema.nullable(),
   isUsedForScoring: z.boolean(),
 });
 export type KpiIndicatorsRow = z.infer<typeof kpiIndicatorsRowSchema>;

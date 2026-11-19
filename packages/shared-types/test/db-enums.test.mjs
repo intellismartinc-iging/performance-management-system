@@ -14,6 +14,8 @@ const PAIRS = [
   ["manager_assignments", "status", "MANAGER_ASSIGNMENT_STATUSES", []],
   ["kpi_goal_templates", "status", "TEMPLATE_VERSION_STATUSES", []],
   ["kpi_indicators", "direction", "KPI_DIRECTIONS", []],
+  ["kpi_indicators", "matrix_kind", "MATRIX_KINDS", []],
+  ["kpi_indicators", "scale_bound", "SCALE_BOUNDS", []],
   ["behavioral_questions", "question_type", "BEHAVIORAL_QUESTION_TYPES", []],
   ["cycles", "review_type", "REVIEW_TYPES", []],
   ["cycles", "state", "CYCLE_STATUSES", []],

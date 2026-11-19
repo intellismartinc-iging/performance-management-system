@@ -8,6 +8,8 @@ export const kpiGoalTemplatesRowSchema = z.object({
   templateId: idSchema,
   positionId: bigintIdSchema.nullable(),
   companyId: bigintIdSchema,
+  name: z.string().nullable(),
+  description: z.string().nullable(),
   status: templateVersionStatusSchema,
   currentVersion: z.number().int(),
   publishedBy: idSchema.nullable(),

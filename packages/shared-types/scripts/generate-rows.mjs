@@ -27,6 +27,8 @@ const ENUM_COLUMNS = {
   "manager_assignments.status": "managerAssignmentStatusSchema",
   "kpi_goal_templates.status": "templateVersionStatusSchema",
   "kpi_indicators.direction": "kpiDirectionSchema",
+  "kpi_indicators.matrix_kind": "matrixKindSchema",
+  "kpi_indicators.scale_bound": "scaleBoundSchema",
   "behavioral_templates.status": "templateVersionStatusSchema",
   "behavioral_questions.question_type": "behavioralQuestionTypeSchema",
   "cycles.review_type": "reviewTypeSchema",

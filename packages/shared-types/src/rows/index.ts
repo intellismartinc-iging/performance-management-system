@@ -21,6 +21,7 @@ export * from "./goal-milestones.row.js";
 export * from "./goal-progress-updates.row.js";
 export * from "./journal-entries.row.js";
 export * from "./kpi-goal-templates.row.js";
+export * from "./kpi-indicator-matrix-cells.row.js";
 export * from "./kpi-indicator-matrix-columns.row.js";
 export * from "./kpi-indicator-matrix-rows.row.js";
 export * from "./kpi-indicator-scales.row.js";

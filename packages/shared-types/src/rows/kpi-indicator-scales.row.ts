@@ -6,8 +6,9 @@ import { decimalSchema, idSchema } from "../common.js";
 export const kpiIndicatorScalesRowSchema = z.object({
   scaleId: idSchema,
   indicatorId: idSchema,
-  lowerBound: decimalSchema,
+  lowerBound: decimalSchema.nullable(),
   upperBound: decimalSchema.nullable(),
-  score: z.number().int(),
+  label: z.string().nullable(),
+  score: decimalSchema,
 });
 export type KpiIndicatorScalesRow = z.infer<typeof kpiIndicatorScalesRowSchema>;
