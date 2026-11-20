@@ -126,6 +126,20 @@ describe("GoalTemplateListing", () => {
     expect(screen.getByRole("combobox", { name: /status/i })).toBeTruthy();
   });
 
+  it("offers Draft and Published in the status filter, and no Archived", async () => {
+    renderListing();
+
+    await userEvent.setup().click(screen.getByRole("combobox", { name: /status/i }));
+
+    const options = await screen.findAllByRole("option");
+
+    expect(options.map((option) => option.textContent)).toEqual([
+      "All statuses",
+      "Draft",
+      "Published",
+    ]);
+  });
+
   it("hides the status filter on the Draft and Published tabs", () => {
     renderListing({ tab: "draft" });
 
