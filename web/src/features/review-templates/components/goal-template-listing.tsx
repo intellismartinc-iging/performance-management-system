@@ -27,7 +27,10 @@ const TABS = [
   { value: "published", label: "Published" },
 ] as const satisfies readonly { value: TemplateTab; label: string }[];
 
-const STATUS_OPTIONS = TEMPLATE_VERSION_STATUSES.map((value) => ({
+// The page has no Archive action, so the filter offers no Archived option.
+const STATUS_OPTIONS = TEMPLATE_VERSION_STATUSES.filter(
+  (value) => value !== "archived",
+).map((value) => ({
   value,
   label: TEMPLATE_VERSION_STATUS_LABELS[value],
 }));

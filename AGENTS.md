@@ -26,6 +26,7 @@ Apply to every request that writes or changes code. No trigger is needed. `/lean
 4. Never cut validation, security, data safety, accessibility, or tests.
 5. End each coding task with a Lean Report: a table of requirement, rung, evidence, and lines written; the deferred items with the trigger that makes each necessary; and the command you ran with its result.
 6. `/lean-code review` reports over-engineering in a diff. `/lean-code audit <dir>` reports it in one folder. `/lean-code debt` lists deferred items. Both report only and change no file.
+7. Load the `lean-code` skill. It reads its own reference files: the reuse ladder, TypeScript rules, function design, design principles, and design patterns.
 
 ## Security
 

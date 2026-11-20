@@ -1,20 +1,22 @@
 # Handoff: KPI Goal Templates module
 
-2026-11-19 · The KPI Goal Templates module (list, details, create, edit, publish new version) is built across shared-types, backend, and web on `feat/kpi-goal-templates`; nothing is committed and nothing was checked in a browser.
+2026-11-19 · The KPI Goal Templates module (list, details, create, edit, publish new version) is built across shared-types, backend, and web and merged to `main` in PR #6 (merge commit `a564b2c`). On 2026-11-20 the second HR account was added and the browser pass was reported as passed by the user.
 
 Recipient: the next AI session in this repo (same user, Miguel). Replies are Taglish.
 
 ## 1. Objective
 
-Finish and land the KPI Goal Templates module by copying the legacy flow at `C:\Users\mdasalla\Documents\GitHub\pms-be\frontend\legacy`. The next work is a browser pass, the commit, and the open gaps in section 8.
+Finish the KPI Goal Templates module, copied from the legacy flow at `C:\Users\mdasalla\Documents\GitHub\pms-be\frontend\legacy`. The code is on `main`. The next work is the second admin account, a browser pass, and the open gaps in section 8.
 
 ## 2. Current State
 
-- Branch `feat/kpi-goal-templates`. Committed locally in four commits, each separate: `3edb55e` shared-types and database, `e734f4a` backend, `b47c17b` web, and a last commit for every `.md` file (AGENTS.md, CLAUDE.md, docs, this handoff, web/DESIGN.md). The user asked for the push to the remote `fork`, branch `feat/kpi-goal-templates` (`git push -u fork feat/kpi-goal-templates`); check `git log fork/feat/kpi-goal-templates` to see whether it landed. Do not push to `origin` or `main`. After this point, commit only when the user asks.
+- The module is on `main`. The user merged PR #6 (https://github.com/iti-vin/performance-management-system/pull/6, from `fork/feat/kpi-goal-templates`): four commits, `3edb55e` shared-types and database, `e734f4a` backend, `b47c17b` web, `277e423` every `.md` file. Local `main` was pulled and equals `origin/main` (merge commit `a564b2c`). The branch `feat/kpi-goal-templates` still exists locally and on `fork`; the user may delete it. Do not push to `main`: start new work on a new `feat/` or `fix/` branch. Commit only when the user asks.
+- Uncommitted on `main` after the merge: a one-line addition to `AGENTS.md` (lean code item 7: load the `lean-code` skill and its reference files). `CLAUDE.md` matches the committed file (the stray space in "contract" was only on disk and is fixed). The `.claude/skills/lean-code` and `.agents/skills/lean-code` folders are gitignored and hold the reference files (`typescript-standards.md`, `function-design.md`, `design-principles.md`, `design-patterns.md`, `reuse-ladder.md`); a `sauron add` can overwrite them.
 - Last verified results, run just before the commits: `pnpm build:packages`, shared-types 76 tests, database 9 tests, backend 179 tests with `tsc --noEmit` and `oxlint` clean, web `tsc` and `eslint` clean, web 187 tests, and `pnpm build` passing.
-- Never run: any check in a real browser (viewport, theme, keyboard), or the new reset-on-leave effect cleanup in a real browser (only the Leave-button path has a test). The database behavior was seen only through the user's own queries (templates saved, versions 1 and 2 created, `created_by` shows the right person).
+- Browser pass, 2026-11-20 (done by the user in a real browser, as reported in chat): draft details buttons, published details, edit of a published template (Update Template confirm, version 2 created), locked unit and direction on saved indicators, percentage, weight, and score caps, Back and Leave, return to `/new` blank, and no old text after Save as Draft all passed. Screenshots were seen for the draft and published details, the edit page, the confirm dialog, the version 2 list row, the Leave dialog, and the blank builder. The user reported the viewport, theme, and keyboard checks as passed without saying which sizes, themes, or keys: treat those details as unverified. No automated browser test exists (`web/tests/e2e` holds only `.gitkeep`).
+- Database behavior, seen through the user's own queries: templates saved, versions 1 and 2 created, `created_by` shows the right person. A new draft by the second HR account has `created_by` = Lebron James, `published_by` NULL, `frozen_at` NULL, `current_version` 1. Version 2 of an edited template holds both indicators with weights 50 and 50, and version 1 is unchanged.
 - Working in the app (as reported by the user's queries): create draft, publish, edit published (v2 created), saves recorded under "Iging DotTech" (employee GUID `284ddc9e-ebe4-468d-945f-fb18af72e6...`).
-- Second HR account `lebronjames...` (public.users id 10, employee id 5, hrdotnet_id 23, GUID `6a685ca5-7613-4e80-a384-4ebe60263a...`) is blocked: no row in `pms.employees`, so the builder page shows "HR access required". The fix script exists and is NOT run yet (section 5).
+- Second HR account `lebronjames...` (public.users id 10, employee id 5, hrdotnet_id 23, GUID `6a685ca5-7613-4e80-a384-4ebe60263a...`) now works: `pms-add-hr-account.sql` was run on 2026-11-20 and added `pms.employees` id 24 (company 1, department 1, no position). Its saves are recorded under its own GUID. A published template by this account was created at 17:12 on 2026-11-19, before the handoff described the account as blocked: how that happened is not explained.
 - Details page shows status badge and version. Buttons per status: draft = Edit Draft + Publish Template; published = Edit Template; archived = none. No Duplicate, no Archive, no Preview on details (the user asked to remove Duplicate and Archive).
 
 ## 3. Key Decisions & Rationale
@@ -47,7 +49,7 @@ Finish and land the KPI Goal Templates module by copying the legacy flow at `C:\
 
 ## 5. Artifacts and File Changes
 
-All paths under `C:\Users\mdasalla\Documents\GitHub\performance-management-system` unless noted. All uncommitted.
+All paths under `C:\Users\mdasalla\Documents\GitHub\performance-management-system` unless noted. All merged to `main` in PR #6.
 
 shared-types (completed, built with `pnpm build:packages`):
 
@@ -79,7 +81,7 @@ User database scripts (gitignored `.codex/scripts/`):
 - `kpi-score-numeric.sql`: the user ran it
 - `kpi-templates-slice.sql` (name/description, matrix DDL, `use_for_scoring` backfill): the user was told to run it with the backend stopped; saving a template works, so it very likely ran, but the user never confirmed it formally
 - `pms-link-hr-account.sql`: ran and verified (row 21 of `pms.employees` is now Iging DotTech; old versions moved to the real GUID; every template row shows Iging DotTech)
-- `pms-add-hr-account.sql`: written, NOT run. It adds a `pms.employees` row for public.users id 10 with defaults company 1, department 1, no position, new id = max(id)+1. The user must run it (F5, one script) and may change company/department first.
+- `pms-add-hr-account.sql`: the user ran it on 2026-11-20 and checked the result (one row: id 24, GUID `6a685ca5-...`, hrdotnet_id 23, company 1, department 1). It adds a `pms.employees` row for public.users id 10 with defaults company 1, department 1, no position, new id = max(id)+1.
 - `.codex/prompts/ui-redesign.md`: Codex prompt, completed
 
 Other:
@@ -89,7 +91,7 @@ Other:
 
 ## 6. Verbatim Essentials & Constraints
 
-- Branch: `feat/kpi-goal-templates`. Do not push to `main`. Do not commit unless the user asks.
+- Branch: the module is merged, and the user is on `main`. Do not push to `main`: new work goes on a new `feat/<name>` or `fix/<name>` branch. Do not commit unless the user asks.
 - Legacy to copy: `C:\Users\mdasalla\Documents\GitHub\pms-be\frontend\legacy`.
 - Button rules (the user's words in summary): draft details = "Edit Draft" and "Publish Template" only; published details = "Edit Template"; no Duplicate, no Archive. Edit page: draft = Preview, Save as Draft, Publish Template; published = Update Template (Preview kept).
 - Locked on a published template (saved indicators only): Measurement Unit and Achievement Direction. Nothing else.
@@ -113,9 +115,9 @@ Other:
 
 ## 8. Open Items & Immediate Next Steps
 
-- Next action 1: the user runs `.codex/scripts/pms-add-hr-account.sql` (change company/department first if needed), then logs in as `lebronjames...` and opens the builder. Confirm it saves under GUID `6a685ca5-...`.
-- Next action 2: browser pass (nothing was checked in a browser): draft details buttons; published details and edit (Update Template confirm, locked unit and direction on saved indicators, open on new ones); percentage cap at 100; weight and score caps; Back, Leave, and return to `/new` shows blank and no dialog; after Save as Draft the page does not keep old text. Report viewport, theme, and keyboard checks actually run.
-- Next action 3: the commits exist (see section 2). Remaining: confirm the push landed, then open the PR when the user asks. The branch is about 100 files, above the PR ceiling of about 15 files and 500 lines in the progress-report command: say so in the PR, or split it if a reviewer asks. `progress-report-result.md` is gitignored and local. PR note for teammates: the ALTER scripts under `.codex/scripts` (stop the backend first for `kpi-templates-slice.sql`), the `pms.employees` account link step, and the gaps below.
+- Done 2026-11-20: the second HR account script ran, the builder saves under GUID `6a685ca5-...`, and the browser pass passed (section 2). Left open: record which viewport sizes, themes, and keys were checked, if that matters to a reviewer.
+- Change in the PR that follows this handoff: the Status filter of the list no longer offers Archived, because the page has no Archive action. Existing archived rows still show on the All tab, and `?status=archived` still works in the URL.
+- Next action 3: the PR is merged (see section 2). Teammates who pull `main` need the ALTER scripts under `.codex/scripts` (stop the backend first for `kpi-templates-slice.sql`), the `pms.employees` account link step, and to know the gaps below. `progress-report-result.md` is gitignored and local. The `AGENTS.md` edit in section 2 needs a new branch and a commit when the user asks.
 - Gap: company scoping of the list, details, and write routes is not enforced (CWE-639): every admin sees every template. Needs the backend owner's decision.
 - Gap: the page shows one generic "HR access required" notice for both a role refusal and "No company is linked to your account". Offered to the user, not done: show the real reason.
 - Gap: indicator identity across versions is not persisted (`createVersion` writes fresh ids; unit and direction lock matches by the ids the client sends).
@@ -124,9 +126,9 @@ Other:
 - Gap: the details page omits Preview (legacy had it); published Update publishes at once (legacy made a draft); rows open details, not the builder.
 - Gap: `pms-link-hr-account.sql` and `pms-add-hr-account.sql` assume company 1 and department 1 exist, and that no other table has a foreign key on `pms.employees.guid`. If a script fails on a foreign key, send the exact message.
 - Gap: real `pms.employees` data is still placeholder; there is no sync from HRDotNet. Each admin needs a correct row.
-- Blocked: the second admin's builder, until the add-account script runs.
+- Gap: `name` and `description` live on `kpi_goal_templates`, not on the version row. Editing a published template changes them for version 1 as well (seen 2026-11-20: version 1 showed the new description). Decide whether they belong on the version.
 - Other work tracked separately by the user: auth acceptance and production hardening.
-- Daily logs: the morning log draft is unsent (waiting on "send"). The evening log: `reports/2026-11-19-done.md` is written and a dry run was started; it is unsubmitted (waiting on "submit"). Neither was committed.
+- Daily logs: the morning log draft is unsent (waiting on "send"). The evening log: the user submitted it himself, so nothing is pending for it, and the browser dry runs were stopped. Neither log was committed.
 
 ## 9. Suggested Opening Prompt for Next Session
 
@@ -134,12 +136,12 @@ Other:
 /lean-code activate
 /caveman ultra activate
 
-Read AGENTS.md, CLAUDE.md, and docs/handoffs/2026-11-19-kpi-goal-templates.md first. We are on branch feat/kpi-goal-templates in C:\Users\mdasalla\Documents\GitHub\performance-management-system. Do not commit unless I ask.
+Read AGENTS.md, CLAUDE.md, and docs/handoffs/2026-11-19-kpi-goal-templates.md first. We are on branch main (synced with origin/main, PR #6 merged) in C:\Users\mdasalla\Documents\GitHub\performance-management-system. Do not push to main: create a new feat/ or fix/ branch before you edit tracked files. Do not commit unless I ask.
 
 Rules for this session:
 - Replies in Taglish, Caveman ultra. Lean-code on: end each coding task with a Lean Report.
 - Call the advisor tool before you commit to an approach on anything complex (change across shared-types, backend, web; an access rule; a schema change; a bug that resists a first fix), and again before you say the work is done. Orientation first, then advisor, then write. Fix what it flags or tell me why not.
 - Write the failing test first. Never send or submit a daily log without my explicit "send" or "submit".
 
-First task: I run .codex/scripts/pms-add-hr-account.sql for the second HR account (user 10), then you help me verify the builder works for it and walk me through the browser checks in section 8 of the handoff. Then, when I say so, split the work into logical commits. Ask me which item in section 8 to do next if I do not say.
+First task: ask me which open item in section 8 to do next (a gap, or the details of the viewport, theme, and keyboard checks). Do not commit or push unless I ask.
 ```
