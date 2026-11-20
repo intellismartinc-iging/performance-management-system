@@ -1,22 +1,23 @@
-# .docs/
+# Documentation
 
-Project documentation for PMS (NestJS property/records management service).
+Product and engineering documents for the HRDotNet Performance Management System (PMS). One topic per file, kebab-case names. Update a document in the same pull request as the change it describes. Put no secret in a document: refer to `.env.example`.
 
-Place project-level Markdown files here:
-
-- `architecture.md` - system design, module boundaries, data flow
-- `api.md` - endpoint reference, request/response examples
-- `database.md` - schema, entities, migration notes
-- `operations.md` - deployment, environment variables, monitoring
-- `decisions/` - architecture decision records (ADR)
-
-## Conventions
-
-- One topic per file, kebab-case names.
-- Update docs when the feature they describe changes.
-- Do not put secrets in docs. Reference `.env.example` instead.
+| Document                                                                           | Subject                                                                                    |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [product-requirements-document.md](product-requirements-document.md)               | What the system does                                                                       |
+| [system-architecture.md](system-architecture.md)                                   | Topology, technology stack, directory layout, module boundaries, request flows, invariants |
+| [project-structure.md](project-structure.md)                                       | Folder map and the rule each folder follows                                                |
+| [workspace-blueprint.md](workspace-blueprint.md)                                   | Workspaces, ownership, builds, and releases                                                |
+| [coding-standards.md](coding-standards.md)                                         | Backend coding conventions                                                                 |
+| [engineering-rules.md](engineering-rules.md)                                       | Rules for every change                                                                     |
+| [api-contracts.md](api-contracts.md)                                               | Endpoints and response shapes                                                              |
+| [error-handling.md](error-handling.md)                                             | Error categories, envelope, and status codes                                               |
+| [database-design.md](database-design.md), [database-schema.md](database-schema.md) | The logical model, tables, and columns                                                     |
+| [security-policies.md](security-policies.md)                                       | Security rules                                                                             |
+| [legacy-gap-analysis.md](legacy-gap-analysis.md)                                   | What the legacy web app has that `web/` lacks                                              |
+| [handoffs/](handoffs/README.md)                                                    | State snapshots for whoever continues a piece of work                                      |
 
 ## Related
 
-- `CLAUDE.md` - agent instructions (Sauron managed)
-- `.claude/docs/` - reference docs Claude reads on demand
+- `AGENTS.md` and `CLAUDE.md` at the repository root: instructions for coding agents.
+- `web/DESIGN.md` and `web/llm.txt`: design tokens and the rules of every web folder.

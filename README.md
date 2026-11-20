@@ -7,11 +7,12 @@ A monorepo for the HRDotNet Performance Management System (PMS). It holds a Next
 What exists in the code today:
 
 - **Authentication.** The web app logs a user in or creates a login from an employee code. The API issues a JWT access token. The web server action stores it in an httpOnly cookie, and `web/src/proxy.ts` redirects pages by that cookie.
-- **Workspace shell.** A responsive sidebar, a header with the live Manila date and time, a notification menu, an account menu with a light and dark theme switch, and a role preview switcher (employee, manager, HR administrator).
+- **Workspace shell.** A responsive sidebar, a header with the live Manila date and time, a notification menu, an account menu with a light and dark theme switch, and a sidebar menu that follows the role of the signed-in account (employee, manager, HR administrator).
 - **Component library.** Shared components under `web/src/components`: data table, listing, detail and form page templates, charts, dialogs, form fields, and skeleton loading states.
-- **Feature components** for cycle setup, KPI and behavioral template editors, KPI reporting and verification, and evaluator scoring. They are not routed to pages or connected to the API yet. Nine of the workspace pages render a placeholder template.
+- **KPI Goal Templates.** List, details, create, edit, publish, and new version, wired from the web app to the API (`/reviews/templates/kpi-goal-template`).
+- **Feature components** for cycle setup, the behavioral template editor, KPI reporting and verification, and evaluator scoring. They are not routed to pages or connected to the API yet. Eight of the workspace pages render a placeholder template.
 - **API.** Authentication, employees, KPI goal templates, and behavioral assessment templates. See [backend/README.md](backend/README.md).
-- **Shared contracts.** Zod enums, one generated row schema for each of the 40 tables, and request and response DTOs. See [packages/shared-types/README.md](packages/shared-types/README.md).
+- **Shared contracts.** Zod enums, one generated row schema for each of the 41 `pms` tables, and request and response DTOs. See [packages/shared-types/README.md](packages/shared-types/README.md).
 
 ## Tech Stack
 
@@ -34,7 +35,7 @@ What exists in the code today:
 ├── packages/
 │   ├── shared-types/         Zod contracts (@pms/shared-types)
 │   └── database/             PostgreSQL schema and seed (@pms/database)
-├── docs/                     Workspace blueprint
+├── docs/                     Product and engineering documents (see docs/README.md)
 ├── .github/                  CI workflow and CODEOWNERS
 ├── package.json              Root scripts
 ├── pnpm-workspace.yaml       Workspaces, dependency catalog

@@ -59,6 +59,9 @@ backend/
 │   │   │   └── matches.decorator.ts
 │   │   ├── dtos/
 │   │   │   └── api-response.dto.ts
+│   │   ├── filters/
+│   │   │   ├── api-exception.filter.ts      # Global filter: every failure leaves as the shared error envelope
+│   │   │   └── api-exception.filter.spec.ts
 │   │   └── guards/
 │   │       └── jwt-auth.guard.ts
 │   │
@@ -66,16 +69,21 @@ backend/
 │       ├── auth/
 │       │   ├── auth.module.ts
 │       │   ├── controllers/
-│       │   │   └── auth.controller.ts
+│       │   │   ├── auth.controller.ts
+│       │   │   └── auth.controller.spec.ts
 │       │   ├── services/
+│       │   │   ├── account-registration.service.ts
 │       │   │   ├── auth.service.ts
 │       │   │   └── auth.service.spec.ts
 │       │   ├── dtos/
 │       │   │   ├── auth-response.dto.ts
+│       │   │   ├── current-user-response.dto.ts
 │       │   │   ├── login.dto.ts
+│       │   │   ├── password-length.spec.ts
 │       │   │   ├── refresh-token.dto.ts
 │       │   │   ├── register.dto.ts
-│       │   │   └── sign-up.dto.ts
+│       │   │   ├── sign-up.dto.ts
+│       │   │   └── token-response.dto.ts
 │       │   ├── entities/
 │       │   │   ├── employee.entity.ts
 │       │   │   ├── hrdotnet.entity.ts
@@ -89,12 +97,15 @@ backend/
 │       ├── employees/
 │       │   ├── employees.module.ts
 │       │   ├── controllers/
-│       │   │   └── employees.controller.ts
+│       │   │   ├── employees.controller.ts
+│       │   │   └── employees.controller.spec.ts
 │       │   ├── services/
 │       │   │   ├── employee.service.ts
 │       │   │   └── employee.service.spec.ts
 │       │   ├── dtos/
 │       │   │   ├── create-employee.dto.ts
+│       │   │   ├── employee-page.dto.ts
+│       │   │   ├── list-employees-query.dto.ts
 │       │   │   └── update-employee.dto.ts
 │       │   ├── entities/
 │       │   │   └── employee-domain.entity.ts
@@ -107,15 +118,21 @@ backend/
 │       ├── kpi-goals/
 │       │   ├── kpi-goals.module.ts
 │       │   ├── controllers/
-│       │   │   └── kpi-goals.controller.ts
+│       │   │   ├── kpi-goals.controller.ts
+│       │   │   └── kpi-goals.controller.spec.ts
 │       │   ├── services/
-│       │   │   └── kpi-goals.service.ts
+│       │   │   ├── company-resolver.service.ts      # Company and actor GUID of the signed-in account
+│       │   │   ├── company-resolver.service.spec.ts
+│       │   │   ├── kpi-goals.service.ts
+│       │   │   └── kpi-goals.service.spec.ts
 │       │   ├── dtos/
 │       │   │   ├── create-kpi-goal-template.dto.ts
+│       │   │   ├── kpi-goal-template-contract.spec.ts
 │       │   │   ├── kpi-indicator.dto.ts
 │       │   │   └── update-kpi-goal-template.dto.ts
 │       │   ├── entities/
 │       │   │   ├── kpi-goal-template.entity.ts
+│       │   │   ├── kpi-indicator-matrix-cell.entity.ts
 │       │   │   ├── kpi-indicator-matrix-column.entity.ts
 │       │   │   ├── kpi-indicator-matrix-row.entity.ts
 │       │   │   ├── kpi-indicator-scale.entity.ts
@@ -209,7 +226,7 @@ main.ts -> app.module.ts -> modules/<feature> -> common/, config/
 
 - A module imports `common/` and `config/`. `common/` and `config/` never import a module (`oxlint.json` enforces this).
 - Inside a module: controller -> service -> entity. A service never imports a controller.
-- A module uses another module through that module's exported service, registered in `imports` of its `*.module.ts`. Known exception today: `employees` imports the `User` entity of `auth` directly.
+- A module uses another module through that module's exported service, registered in `imports` of its `*.module.ts`. Known exceptions today: `employees` imports the `User` entity and `ADMIN_ROLE_ID` of `auth`, and `kpi-goals` imports `AdminRoleGuard`, `EmployeeService`, and `AuthedUser` of `employees` and the `User` entity of `auth`. `system-architecture.md` lists them.
 
 ### 2.5 Error handling
 
@@ -220,7 +237,7 @@ The rules are in `error-handling.md`. Their place in this structure:
 | Request validation                     | `dtos/` with the global `ValidationPipe` in `main.ts`                                                    | In place           |
 | Business failures                      | Thrown by `services/` as NestJS HTTP exceptions (`NotFoundException`, `ConflictException`, and so forth) | In place           |
 | Access failures                        | Thrown by `guards/`                                                                                      | In place           |
-| One error envelope for every failure   | `common/filters/` (a global exception filter)                                                            | Planned, not built |
+| One error envelope for every failure   | `common/filters/api-exception.filter.ts` (a global exception filter, set in `main.ts`)                   | In place           |
 | Domain error classes with stable codes | `common/exceptions/`                                                                                     | Planned, not built |
 
 A controller does not catch errors to change them. A `catch` either adds context and rethrows with `cause`, or handles the failure completely. An empty `catch` is not allowed.
@@ -270,7 +287,12 @@ web/
 │   │           ├── page.tsx
 │   │           └── templates/
 │   │               ├── behavioral-assessment-template/page.tsx
-│   │               └── kpi-goal-template/page.tsx
+│   │               └── kpi-goal-template/
+│   │                   ├── page.tsx             # List
+│   │                   ├── new/page.tsx         # Builder
+│   │                   └── [templateId]/
+│   │                       ├── page.tsx         # Details
+│   │                       └── edit/page.tsx    # Edit
 │   │
 │   ├── components/                          # Reusable components with no feature knowledge
 │   │   ├── ui/                              # shadcn primitives on Base UI
@@ -281,8 +303,10 @@ web/
 │   │
 │   ├── features/                            # One folder per feature
 │   │   ├── auth/
-│   │   │   ├── components/                  # credentials-form.tsx, password-input.tsx
-│   │   │   └── services/                    # auth-credentials.ts, session-cookie.ts, session-guard.ts, submit-credentials.ts
+│   │   │   ├── api/                         # auth-requests.ts
+│   │   │   ├── components/                  # auth-option-link.tsx, credentials-form.tsx, password-input.tsx
+│   │   │   ├── hooks/                       # use-credentials-form.ts
+│   │   │   └── services/                    # auth-credentials.ts, current-user.ts, refresh-session.ts, session-cookie.ts, session-guard.ts, sign-out.ts, submit-credentials.ts
 │   │   ├── evaluations/
 │   │   │   ├── components/                  # evaluator-scoring-form.tsx
 │   │   │   └── services/                    # assessment-request.ts
@@ -292,15 +316,16 @@ web/
 │   │   ├── review-cycles/
 │   │   │   └── components/                  # Cycle setup stepper, its steps, and the cycles table
 │   │   └── review-templates/
-│   │       ├── components/                  # behavioral-template-editor.tsx, kpi-goal-template-editor.tsx
-│   │       └── services/                    # template-requests.ts
+│   │       ├── api/                         # goal-template-requests.ts (server only)
+│   │       ├── components/                  # kpi-goal-template-editor.tsx, indicator-matrix-editor.tsx, goal-template-* (list, listing, details, create, edit, notices), behavioral-template-editor.tsx (not routed)
+│   │       └── services/                    # create-goal-template.ts, manage-goal-template.ts, goal-template-reader.ts, goal-template-selection.ts, goal-template-editor-state.ts, goal-template-format.ts, indicator-matrix.ts, template-requests.ts
 │   │
 │   ├── layouts/                             # auth-layout.tsx, workspace-layout.tsx, workspace-account-menu.tsx, workspace-clock.tsx
-│   ├── constants/                           # domain-labels.ts, review-tones.ts, workspace-config.ts, workspace-navigation.ts
+│   ├── constants/                           # domain-labels.ts, goal-template-path.ts, review-tones.ts, workspace-config.ts, workspace-navigation.ts
 │   ├── context/                             # query-provider.tsx, theme-provider.tsx
 │   ├── stores/                              # workspace-store.ts (Zustand)
 │   ├── hooks/                               # use-mobile.ts, use-unsaved-changes-warning.ts
-│   ├── api/                                 # api-client.ts (server side only)
+│   ├── api/                                 # api-client.ts, api-url.ts (server side only)
 │   ├── lib/                                 # utils.ts (class name helper)
 │   ├── utils/                               # csv.ts
 │   ├── styles/                              # colors.css, typography.css, layout.css, media.css, motion.css, surfaces.css
@@ -327,7 +352,6 @@ web/
 ├── llm.txt
 ├── next.config.ts
 ├── package.json
-├── sauron.config.yaml
 ├── tsconfig.json
 └── vitest.config.mts
 ```
@@ -364,9 +388,10 @@ packages/shared-types/
 │   ├── common.ts                  # Shared Zod pieces
 │   ├── domain/                    # One enum per file: <name>.enum.ts, plus index.ts
 │   ├── rows/                      # One generated row schema per table: <table>.row.ts, plus index.ts
+│   ├── rules/                     # Rules both apps and the editor share: kpi-matrix.ts, kpi-target.ts, kpi-weights.ts
 │   └── dtos/                      # Request and response schemas: <topic>.schema.ts
 ├── scripts/generate-rows.mjs      # Writes src/rows from packages/database/schema.sql
-├── test/                          # auth.test.mjs, db-enums.test.mjs, rows.test.mjs
+├── test/                          # One <topic>.test.mjs per area (auth, db-enums, errors, goal-template, ids, kpi rules, rows)
 ├── README.md
 ├── package.json
 └── tsconfig.json
@@ -403,6 +428,7 @@ The module definitions under `schema/` supply the row schemas generated by `shar
 | `README.md`                                | Index of the documents                                                          |
 | `product-requirements-document.md`         | What the system does                                                            |
 | `project-structure.md`                     | This file                                                                       |
+| `system-architecture.md`                   | Topology, stack, directory layout, module boundaries, request flows             |
 | `workspace-blueprint.md`                   | Workspaces, their boundaries and versions                                       |
 | `coding-standards.md`                      | Backend coding conventions                                                      |
 | `engineering-rules.md`                     | Rules for every change                                                          |
