@@ -20,7 +20,7 @@ What exists in the code today:
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Web       | Next.js 16.4 (App Router, React Compiler, `cacheComponents`), React 19.3, Tailwind CSS 4, shadcn on Base UI, TanStack Query, Zustand, react-hook-form, Recharts |
 | API       | NestJS 12, TypeORM, Passport JWT, Swagger, class-validator                                                                                                      |
-| Data      | PostgreSQL (main database), SQL Server (read-only HRDotNet source)                                                                                              |
+| Data      | PostgreSQL (schema `pms`)                                                                                                                                       |
 | Contracts | Zod 4, TypeScript 5.9                                                                                                                                           |
 | Tooling   | pnpm 12 workspaces, ESLint 9, oxlint, Prettier, Vitest, Husky, lint-staged, GitHub Actions                                                                      |
 
@@ -60,8 +60,7 @@ What exists in the code today:
 
 - Node.js 24 (the CI version)
 - pnpm 12.14.0 (`corepack enable` reads the version from `packageManager`)
-- PostgreSQL for the main database
-- SQL Server access to the HRDotNet database. The API stops at startup when the `DB_*` variables are missing.
+- PostgreSQL for the database (schema `pms`)
 
 ## Installation
 
@@ -88,12 +87,9 @@ cp backend/.env.example backend/.env
 | `PORT`                                              | backend | API port. The default is 3000, the same as the web dev server |
 | `POSTGRES_HOST`, `POSTGRES_PORT`                    | backend | Main database. Defaults: `localhost`, `5433`                  |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | backend | Main database. Defaults: `postgres`, `postgres`, empty        |
-| `DB_HOST`, `DB_PORT`, `DB_DATABASE`                 | backend | HRDotNet SQL Server. `DB_PORT` defaults to `1433`             |
-| `DB_USERNAME`, `DB_PASSWORD`                        | backend | HRDotNet SQL Server login                                     |
-| `DB_ENCRYPT`, `DB_TRUST_SERVER_CERTIFICATE`         | backend | `true` or `false`                                             |
 | `JWT_ACCESS_SECRET`                                 | backend | Secret that signs access tokens                               |
 
-`backend/.env.example` lists the `DB_*`, `PORT`, and `JWT_*` variables. It does not list the `POSTGRES_*` variables, so add them yourself.
+`backend/.env.example` lists the `POSTGRES_*`, `PORT`, `JWT_*`, and `SMTP_*` variables.
 
 ## Running the Project
 

@@ -1,6 +1,6 @@
 # PMS: HRDotNet Performance Management System
 
-pnpm 12 monorepo on Node 24. `web`: Next.js 16.4 App Router, React 19, Tailwind CSS 4, shadcn (base-nova), Zod 4. `backend`: NestJS 12, TypeORM, PostgreSQL (main) and read-only MSSQL (HRDotNet). `packages/shared-types`: Zod contracts. `packages/database`: PostgreSQL schema.
+pnpm 12 monorepo on Node 24. `web`: Next.js 16.4 App Router, React 19, Tailwind CSS 4, shadcn (base-nova), Zod 4. `backend`: NestJS 12, TypeORM, PostgreSQL (schema `pms`). `packages/shared-types`: Zod contracts. `packages/database`: PostgreSQL schema.
 
 ## Commands
 
@@ -126,6 +126,6 @@ export type CycleStatus = z.infer<typeof cycleStatusSchema>;
 
 ## Handoff
 
-- When a module or feature is complete, write or update its handoff in `docs/handoffs/` before you report the work complete. One handoff per module or feature: update the same file as the work continues, and do not add a new file for each session. Add a row to `docs/handoffs/README.md` only when you create a file.
+- When a module or feature is complete, write a new handoff in `docs/handoffs/` before you report the work complete. Name it `<date>-<topic>.md`: the date is the date of its state. Never edit an existing handoff file, not even your own from an earlier session: write a new file, and say in it what an older handoff got wrong. Add a row to `docs/handoffs/README.md` for every new file.
 - Write it for the next developer or agent who takes over: the objective, the current state with verified test results, each decision with its reason, the dead ends, the file inventory with status, the exact constraints and corrections, the open items and gaps, and a ready-to-paste opening prompt. Mark anything you did not run or verify as unverified. Invent no state.
 - The handoff follows the `handoff` skill when it is available. It states the state of the work and never narrates the session.

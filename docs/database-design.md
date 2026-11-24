@@ -22,6 +22,8 @@
 
 ### 2.1 companies
 
+> Status 2026-11-24: `companies`, `departments`, and `positions` are not in `schema.sql` since PR #8. `pms.employees` holds `company`, `department`, and `position` as text. Eight schema files still reference the removed tables: see `docs/reviews/2026-11-24-auth-pms-schema-review.md`.
+
 | Column                 | Type        | Notes                   |
 | ---------------------- | ----------- | ----------------------- |
 | company_id             | uuid PK     |                         |

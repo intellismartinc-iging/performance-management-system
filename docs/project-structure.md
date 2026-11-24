@@ -76,17 +76,12 @@ backend/
 │       │   │   ├── auth.service.ts
 │       │   │   └── auth.service.spec.ts
 │       │   ├── dtos/
-│       │   │   ├── auth-response.dto.ts
 │       │   │   ├── current-user-response.dto.ts
 │       │   │   ├── login.dto.ts
 │       │   │   ├── password-length.spec.ts
 │       │   │   ├── refresh-token.dto.ts
-│       │   │   ├── register.dto.ts
-│       │   │   ├── sign-up.dto.ts
 │       │   │   └── token-response.dto.ts
 │       │   ├── entities/
-│       │   │   ├── employee.entity.ts
-│       │   │   ├── hrdotnet.entity.ts
 │       │   │   ├── user-role.entity.ts
 │       │   │   └── user.entity.ts
 │       │   ├── strategies/
@@ -267,9 +262,7 @@ web/
 │   │   ├── favicon.ico
 │   │   ├── (auth)/                          # Signed-out pages
 │   │   │   ├── layout.tsx
-│   │   │   ├── login/page.tsx
-│   │   │   ├── register/page.tsx
-│   │   │   └── sign-up/page.tsx
+│   │   │   └── login/page.tsx
 │   │   └── (workspace)/                     # Signed-in pages
 │   │       ├── layout.tsx
 │   │       ├── page.tsx
@@ -304,7 +297,7 @@ web/
 │   ├── features/                            # One folder per feature
 │   │   ├── auth/
 │   │   │   ├── api/                         # auth-requests.ts
-│   │   │   ├── components/                  # auth-option-link.tsx, credentials-form.tsx, password-input.tsx
+│   │   │   ├── components/                  # credentials-form.tsx, password-input.tsx
 │   │   │   ├── hooks/                       # use-credentials-form.ts
 │   │   │   └── services/                    # auth-credentials.ts, current-user.ts, refresh-session.ts, session-cookie.ts, session-guard.ts, sign-out.ts, submit-credentials.ts
 │   │   ├── evaluations/
