@@ -14,24 +14,32 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import type { Request } from "express";
 import { JwtAuthGuard } from "../../../common/guards/jwt-auth.guard.js";
+import { AdminRoleGuard } from "../../employees/guards/admin-role.guard.js";
+import type { AuthedUser } from "../../employees/types/authed-user.types.js";
 import { ApiErrorResponseDto } from "../../../common/dtos/api-response.dto.js";
 import { CreateBehavioralTemplateDto } from "../dtos/create-behavioral-template.dto.js";
 import { UpdateBehavioralTemplateDto } from "../dtos/update-behavioral-template.dto.js";
 import { BehavioralTemplate } from "../entities/behavioral-template.entity.js";
 import { BehavioralAssessmentService } from "../services/behavioral-assessment.service.js";
 
+/** The request after `JwtAuthGuard`: the JWT strategy sets `user`. */
+interface AuthedRequest {
+  user: AuthedUser;
+}
+
 @ApiTags("Behavioral Assessment")
 @Controller("behavioral-assessment")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminRoleGuard)
 @ApiBearerAuth()
+@ApiForbiddenResponse({ description: "Admin role required", type: ApiErrorResponseDto })
 export class BehavioralAssessmentController {
   constructor(private readonly service: BehavioralAssessmentService) {}
 
@@ -86,9 +94,8 @@ export class BehavioralAssessmentController {
   @ApiOkResponse({ description: "template created with draft version 1" })
   @ApiBadRequestResponse({ description: "Bad Request", type: ApiErrorResponseDto })
   @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
-  async create(@Body() dto: CreateBehavioralTemplateDto, @Req() req: Request) {
-    const user = (req as unknown as { user: { id: string } }).user;
-    return this.service.create(dto, user.id);
+  async create(@Body() dto: CreateBehavioralTemplateDto, @Req() req: AuthedRequest) {
+    return this.service.create(dto, req.user.userId);
   }
 
   @Post(":id/update")
@@ -115,8 +122,25 @@ export class BehavioralAssessmentController {
   @ApiConflictResponse({ description: "template is not in draft state" })
   @ApiNotFoundResponse({ description: "template not found", type: ApiErrorResponseDto })
   @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
-  async publish(@Param("id", new ParseUUIDPipe()) templateId: string, @Req() req: Request) {
-    const user = (req as unknown as { user: { id: string } }).user;
-    return this.service.publish(templateId, user.id);
+  async publish(@Param("id", new ParseUUIDPipe()) templateId: string, @Req() req: AuthedRequest) {
+    return this.service.publish(templateId, req.user.userId);
+  }
+
+  @Post(":id/versions")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "edit a published template: publish its next version, and keep the old one",
+  })
+  @ApiOkResponse({ description: "the template with its new version" })
+  @ApiBadRequestResponse({ description: "Bad Request", type: ApiErrorResponseDto })
+  @ApiConflictResponse({ description: "template is not published" })
+  @ApiNotFoundResponse({ description: "template not found", type: ApiErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: "Unauthorized", type: ApiErrorResponseDto })
+  async createVersion(
+    @Param("id", new ParseUUIDPipe()) templateId: string,
+    @Body() dto: UpdateBehavioralTemplateDto,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.service.createVersion(templateId, dto, req.user.userId);
   }
 }

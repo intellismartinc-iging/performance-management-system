@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { BehavioralTemplate } from '../entities/behavioral-template.entity.js';
 import { BehavioralTemplateVersion } from '../entities/behavioral-template-version.entity.js';
@@ -16,6 +16,23 @@ import { CreateBehavioralTemplateDto } from '../dtos/create-behavioral-template.
 import { QuestionDto, SectionDto } from '../dtos/behavioral-section.dto.js';
 import { UpdateBehavioralTemplateDto } from '../dtos/update-behavioral-template.dto.js';
 import type { TemplateTree } from '../types/template-tree.types.js';
+import { CompanyResolver } from '../../kpi-goals/services/company-resolver.service.js';
+
+/** The repositories that save the content of a version: the injected ones, or those of a transaction. */
+interface ContentStores {
+  sections: Repository<BehavioralSection>;
+  questions: Repository<BehavioralQuestion>;
+  options: Repository<BehavioralChoiceOption>;
+}
+
+/** A frozen version needs content: at least one section, and a question in every section. */
+function assertPublishable(sections: SectionDto[]): void {
+  if (sections.length === 0 || sections.some((section) => (section.questions ?? []).length === 0)) {
+    throw new BadRequestException(
+      'A published template needs at least one section, and a question in every section.',
+    );
+  }
+}
 
 @Injectable()
 export class BehavioralAssessmentService {
@@ -30,18 +47,29 @@ export class BehavioralAssessmentService {
     private readonly questions: Repository<BehavioralQuestion>,
     @InjectRepository(BehavioralChoiceOption)
     private readonly options: Repository<BehavioralChoiceOption>,
+    private readonly companies: CompanyResolver,
+    private readonly dataSource: DataSource,
   ) {}
 
+  /**
+   * The company and the actor come from the signed-in account, never from the
+   * request: `userId` is the login id, and the actor is the GUID of its employee row.
+   */
   async create(
     dto: CreateBehavioralTemplateDto,
-    creatorId: string | null,
+    userId: string,
   ): Promise<TemplateTree> {
+    const { company, actorId } = await this.companies.resolveAccount(userId);
     const templateId = randomUUID();
     const versionId = randomUUID();
 
     const template = this.templates.create({
       templateId,
-      companyId: dto.companyId,
+      company,
+      name: dto.name,
+      description: dto.description?.trim() || null,
+      category: dto.category,
+      reviewType: dto.reviewType,
       status: 'draft',
       currentVersion: 1,
       publishedBy: null,
@@ -55,7 +83,7 @@ export class BehavioralAssessmentService {
       templateId,
       version: 1,
       frozenAt: null,
-      createdBy: creatorId,
+      createdBy: actorId,
     });
     await this.versions.save(version);
 
@@ -80,6 +108,14 @@ export class BehavioralAssessmentService {
       throw new NotFoundException('No active draft version found for template');
     }
 
+    if (dto.name !== undefined) template.name = dto.name.trim();
+    if (dto.description !== undefined) {
+      template.description = dto.description.trim() || null;
+    }
+    if (dto.category !== undefined) template.category = dto.category;
+    if (dto.reviewType !== undefined) template.reviewType = dto.reviewType;
+    await this.templates.save(template);
+
     await this.clearContent(activeVersion.versionId);
     await this.saveSections(dto.sections, activeVersion.versionId);
 
@@ -88,8 +124,9 @@ export class BehavioralAssessmentService {
 
   async publish(
     templateId: string,
-    publisherId: string | null,
+    userId: string,
   ): Promise<TemplateTree> {
+    const { actorId } = await this.companies.resolveAccount(userId);
     const template = await this.findTemplate(templateId);
     if (template.status !== 'draft') {
       throw new ConflictException(
@@ -107,9 +144,75 @@ export class BehavioralAssessmentService {
     await this.versions.save(activeVersion);
 
     template.status = 'published';
-    template.publishedBy = publisherId;
+    template.publishedBy = actorId;
     template.publishedAt = new Date();
     await this.templates.save(template);
+
+    return this.findTree(templateId);
+  }
+
+  /**
+   * Edits a published template: publishes its next version and keeps the old one
+   * as it is, so cycles that already use it do not change. The sections, questions,
+   * and options of the new version get new ids, whatever ids the request carries.
+   * The template row is locked, so two edits at once get version numbers in turn.
+   * It runs in one transaction. Like the KPI route, it does not check that the
+   * template belongs to the caller's company.
+   */
+  async createVersion(
+    templateId: string,
+    dto: UpdateBehavioralTemplateDto,
+    userId: string,
+  ): Promise<TemplateTree> {
+    assertPublishable(dto.sections);
+    const { actorId } = await this.companies.resolveAccount(userId);
+
+    await this.dataSource.transaction(async (manager) => {
+      const template = await manager.findOne(BehavioralTemplate, {
+        where: { templateId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!template) {
+        throw new NotFoundException('Behavioral template not found');
+      }
+      if (template.status !== 'published') {
+        throw new ConflictException(
+          'Only a published template gets a new version. Update a draft instead.',
+        );
+      }
+
+      if (dto.name !== undefined) template.name = dto.name.trim();
+      if (dto.description !== undefined) {
+        template.description = dto.description.trim() || null;
+      }
+      if (dto.category !== undefined) template.category = dto.category;
+      if (dto.reviewType !== undefined) template.reviewType = dto.reviewType;
+      template.currentVersion += 1;
+      template.publishedBy = actorId;
+      template.publishedAt = new Date();
+      await manager.save(template);
+
+      const versionId = randomUUID();
+      await manager.save(
+        manager.create(BehavioralTemplateVersion, {
+          versionId,
+          templateId,
+          version: template.currentVersion,
+          frozenAt: new Date(),
+          createdBy: actorId,
+        }),
+      );
+      await this.saveSections(
+        dto.sections,
+        versionId,
+        {
+          sections: manager.getRepository(BehavioralSection),
+          questions: manager.getRepository(BehavioralQuestion),
+          options: manager.getRepository(BehavioralChoiceOption),
+        },
+        true,
+      );
+    });
 
     return this.findTree(templateId);
   }
@@ -170,28 +273,41 @@ export class BehavioralAssessmentService {
     return { template, version, sections, questions, options };
   }
 
+  /**
+   * Saves the sections of a version, with their questions and options. `freshIds`
+   * ignores the ids of the request: a new version must not reuse the ids of the
+   * version that it follows, because those rows still exist.
+   */
   private async saveSections(
     sectionDtos: SectionDto[],
     versionId: string,
+    stores: ContentStores = {
+      sections: this.sections,
+      questions: this.questions,
+      options: this.options,
+    },
+    freshIds = false,
   ): Promise<void> {
     for (const [index, sectionDto] of sectionDtos.entries()) {
-      const sectionId = sectionDto.sectionId ?? randomUUID();
+      const sectionId = freshIds ? randomUUID() : (sectionDto.sectionId ?? randomUUID());
 
-      const section = this.sections.create({
+      const section = stores.sections.create({
         sectionId,
         versionId,
         title: sectionDto.title,
         sortOrder: sectionDto.sortOrder ?? index,
       });
-      await this.sections.save(section);
+      await stores.sections.save(section);
 
-      await this.saveQuestions(sectionDto.questions ?? [], sectionId);
+      await this.saveQuestions(sectionDto.questions ?? [], sectionId, stores, freshIds);
     }
   }
 
   private async saveQuestions(
     questionDtos: QuestionDto[],
     sectionId: string,
+    stores: ContentStores,
+    freshIds: boolean,
   ): Promise<void> {
     for (const [index, questionDto] of questionDtos.entries()) {
       if (
@@ -203,13 +319,13 @@ export class BehavioralAssessmentService {
         );
       }
 
-      const questionId = questionDto.questionId ?? randomUUID();
+      const questionId = freshIds ? randomUUID() : (questionDto.questionId ?? randomUUID());
       const allowNotObserved =
         questionDto.questionType === 'rating_scale'
           ? questionDto.allowNotObserved ?? false
           : null;
 
-      const question = this.questions.create({
+      const question = stores.questions.create({
         questionId,
         sectionId,
         prompt: questionDto.prompt,
@@ -218,17 +334,17 @@ export class BehavioralAssessmentService {
         allowNotObserved,
         sortOrder: questionDto.sortOrder ?? index,
       });
-      await this.questions.save(question);
+      await stores.questions.save(question);
 
       const options = (questionDto.choiceOptions ?? []).map((o) =>
-        this.options.create({
+        stores.options.create({
           optionId: randomUUID(),
           questionId,
           label: o.label,
         }),
       );
       if (options.length) {
-        await this.options.save(options);
+        await stores.options.save(options);
       }
     }
   }

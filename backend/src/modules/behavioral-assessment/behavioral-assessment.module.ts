@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../auth/entities/user.entity.js';
+import { EmployeeModule } from '../employees/employees.module.js';
+import { AdminRoleGuard } from '../employees/guards/admin-role.guard.js';
+import { KpiGoalsModule } from '../kpi-goals/kpi-goals.module.js';
 import { BehavioralAssessmentController } from './controllers/behavioral-assessment.controller.js';
 import { BehavioralAssessmentService } from './services/behavioral-assessment.service.js';
 import { BehavioralTemplate } from './entities/behavioral-template.entity.js';
@@ -10,7 +14,10 @@ import { BehavioralChoiceOption } from './entities/behavioral-choice-option.enti
 
 @Module({
   imports: [
+    EmployeeModule,
+    KpiGoalsModule,
     TypeOrmModule.forFeature([
+      User,
       BehavioralTemplate,
       BehavioralTemplateVersion,
       BehavioralSection,
@@ -19,7 +26,7 @@ import { BehavioralChoiceOption } from './entities/behavioral-choice-option.enti
     ]),
   ],
   controllers: [BehavioralAssessmentController],
-  providers: [BehavioralAssessmentService],
+  providers: [BehavioralAssessmentService, AdminRoleGuard],
   exports: [BehavioralAssessmentService],
 })
 export class BehavioralAssessmentModule {}

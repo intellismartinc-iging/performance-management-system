@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
-  IsInt,
   IsOptional,
-  IsPositive,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -33,15 +32,16 @@ export class CreateKpiGoalTemplateDto {
   @ApiProperty({
     required: false,
     nullable: true,
-    type: 'integer',
-    minimum: 1,
+    type: 'string',
+    maxLength: 120,
     description:
-      'Optional pms.positions row of your company. Null means company-wide. The company itself comes from your account.',
+      'Optional position that an employee of your company holds. Null means company-wide. The company itself comes from your account.',
   })
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  positionId?: number | null;
+  @IsString()
+  @MaxLength(120)
+  @Matches(/\S/, { message: 'position must not be blank' })
+  position?: string | null;
 
   @ApiProperty({ type: [IndicatorDto] })
   @IsArray()

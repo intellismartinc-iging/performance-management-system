@@ -6,7 +6,7 @@ export const QuestionTypeValues = ["rating_scale", "short_answer", "paragraph", 
 
 export type QuestionType = (typeof QuestionTypeValues)[number];
 
-@Entity({ name: "behavioral_questions" })
+@Entity({ name: "behavioral_questions", schema: "pms" })
 export class BehavioralQuestion {
   @ApiProperty()
   @PrimaryColumn({ name: "question_id", type: "uuid" })
