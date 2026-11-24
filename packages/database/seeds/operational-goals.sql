@@ -5,7 +5,7 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.operational_goals (
-    goal_id, owner_id, creator_id, company_id, name, description, category,
+    goal_id, owner_id, creator_id, company, name, description, category,
     cycle_id, start_date, due_date, progress_percent, tracking_mode,
     status, version, created_at, updated_at
 )
@@ -13,7 +13,7 @@ VALUES
   ('00000000-0000-0000-0000-000000000301',
    '00000000-0000-0000-0000-000000000021',
    '00000000-0000-0000-0000-000000000022',
-   1,
+   'Mayon Consolidated Inc.',
    'Adopt PMS', 'Adopt PMS across the Engineering department.',
    'delivery', '00000000-0000-0000-0000-000000000141',
    '2026-11-04', '2026-12-15', 40.00, 'milestone',

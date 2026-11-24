@@ -11,7 +11,6 @@ import {
   targetExceedsUnit,
 } from "../rules/kpi-target.js";
 import {
-  bigintIdSchema,
   idSchema,
   nonNegativeInputSchema,
   requiredTextSchema,
@@ -104,24 +103,21 @@ export const saveGoalTemplateRequestSchema = z.object({
       `Use at most ${MAX_DESCRIPTION_LENGTH} characters.`,
     )
     .default(""),
-  positionId: bigintIdSchema.nullable(),
+  position: z.string().trim().min(1).max(120).nullable(),
   indicators: z
     .array(indicatorRequestSchema)
     .min(1, "Add at least one indicator."),
 });
 
-/** GET /kpi-goals/positions: the positions of the caller's company, for the editor. */
-export const goalTemplatePositionListResponseSchema = z.array(
-  z.object({ positionId: bigintIdSchema, title: z.string() }),
-);
+/** GET /kpi-goals/positions: the position names of the caller's company, for the editor. */
+export const goalTemplatePositionListResponseSchema = z.array(z.string());
 
 /**
- * GET /kpi-goals: each template row, with its position title and the number of
+ * GET /kpi-goals: each template row, with the number of
  * indicators in its current version. `count` arrives from the driver as a string.
  */
 export const goalTemplateListResponseSchema = z.array(
   goalTemplateDtoSchema.extend({
-    positionTitle: z.string().nullable(),
     indicatorCount: z.coerce.number().int().min(0),
   }),
 );

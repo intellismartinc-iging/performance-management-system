@@ -42,7 +42,7 @@ test("employees row accepts a bigint id as a string and the directory codes", ()
 test("cycles row accepts numeric weights as strings", () => {
   const row = shared.cyclesRowSchema.parse({
     cycleId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-    companyId: 1,
+    company: "Mayon Consolidated Inc.",
     name: "H1 2026",
     reviewType: "standard",
     state: "draft",

@@ -6,7 +6,13 @@
 -- Stores the company-level behavioral assessment template.
 CREATE TABLE IF NOT EXISTS pms.behavioral_templates (
     template_id     uuid PRIMARY KEY,
-    company_id      bigint NOT NULL REFERENCES pms.companies(company_id),
+    company         text NOT NULL,
+    -- name, description, category, and review_type: required in the API for a new template.
+    -- NULL for rows made before the columns existed.
+    name            text,
+    description     text,
+    category        text CHECK (category IN ('general_performance','self_assessment','manager_evaluation','peer_feedback','feedback_360','probationary_evaluation','others')),
+    review_type     text CHECK (review_type IN ('self','manager','peer','upward','hr','others')),
     status          text NOT NULL CHECK (status IN ('draft','published','archived')),
     current_version integer NOT NULL DEFAULT 0,
     published_by    uuid,

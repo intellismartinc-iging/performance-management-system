@@ -9,7 +9,7 @@ const indicator = (unit, target) => ({
   target,
   weight: 100,
 });
-const body = (unit, target) => ({ name: "Goals", positionId: 12, indicators: [indicator(unit, target)] });
+const body = (unit, target) => ({ name: "Goals", position: "Software Engineer", indicators: [indicator(unit, target)] });
 
 test("a percentage target above 100 is out of range", () => {
   assert.equal(targetExceedsUnit("Percentage", 100.01), true);

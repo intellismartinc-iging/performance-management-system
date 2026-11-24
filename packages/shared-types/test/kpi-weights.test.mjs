@@ -28,7 +28,7 @@ test("the request schema carries the id of an existing indicator, and only a uui
   const parse = (indicatorId) =>
     shared.saveGoalTemplateRequestSchema.safeParse({
       name: "Template",
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [{ ...indicator, indicatorId }],
     });
 

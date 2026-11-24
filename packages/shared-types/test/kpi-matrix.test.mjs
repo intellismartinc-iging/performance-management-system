@@ -226,7 +226,7 @@ test("the save schema accepts a scale and a table, and rejects an invalid matrix
   const save = (matrix) =>
     shared.saveGoalTemplateRequestSchema.safeParse({
       name: "Template",
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [{ ...indicator, ...matrix }],
     });
 

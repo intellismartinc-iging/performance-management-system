@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS pms.journal_entries (
     entry_id      uuid PRIMARY KEY,
     employee_id   uuid NOT NULL REFERENCES pms.employees(guid),
     author_id     uuid NOT NULL REFERENCES pms.employees(guid),
-    company_id    bigint NOT NULL REFERENCES pms.companies(company_id),
+    company       text NOT NULL,
     entry_date    date NOT NULL,
     entry_type    text NOT NULL,
     title         text NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS pms.journal_entries (
 CREATE TABLE IF NOT EXISTS pms.nte_notices (
     notice_id               uuid PRIMARY KEY,
     employee_id             uuid NOT NULL REFERENCES pms.employees(guid),
-    company_id              bigint NOT NULL REFERENCES pms.companies(company_id),
+    company                 text NOT NULL,
     category                text NOT NULL,
     subject                 text NOT NULL,
     body                    text NOT NULL,

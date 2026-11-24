@@ -31,26 +31,14 @@ test("login password is 8 to 16 characters", () => {
   assert.equal(body("12345678901234567"), false);
 });
 
-test("sign-up needs matching passwords", () => {
-  const base = {
-    employeeCode: "EMP-001",
-    username: "jane",
-    password: "password123",
-  };
-  assert.equal(
-    shared.signUpRequestSchema.safeParse({
-      ...base,
-      confirmPassword: "password123",
-    }).success,
-    true,
-  );
-  assert.equal(
-    shared.signUpRequestSchema.safeParse({
-      ...base,
-      confirmPassword: "different1",
-    }).success,
-    false,
-  );
+test("the backend has no sign-up or register route, so the package exports no contract for them", () => {
+  for (const name of [
+    "signUpRequestSchema",
+    "registerRequestSchema",
+    "accountCreatedResponseSchema",
+  ]) {
+    assert.equal(name in shared, false, `${name} is still exported`);
+  }
 });
 
 test("token response needs accessToken and expiresIn", () => {
@@ -67,7 +55,7 @@ test("token response needs accessToken and expiresIn", () => {
   );
 });
 
-test("current user carries a role code from public.user_role", () => {
+test("current user carries a role code from pms.user_role", () => {
   const user = {
     userId: "1",
     email: "jane@example.com",

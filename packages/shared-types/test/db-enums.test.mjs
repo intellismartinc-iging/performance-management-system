@@ -21,6 +21,8 @@ const PAIRS = [
   ["kpi_indicators", "matrix_kind", "MATRIX_KINDS", []],
   ["kpi_indicators", "scale_bound", "SCALE_BOUNDS", []],
   ["behavioral_questions", "question_type", "BEHAVIORAL_QUESTION_TYPES", []],
+  ["behavioral_templates", "category", "BEHAVIORAL_TEMPLATE_CATEGORIES", []],
+  ["behavioral_templates", "review_type", "BEHAVIORAL_REVIEW_TYPES", []],
   ["cycles", "review_type", "REVIEW_TYPES", []],
   ["cycles", "state", "CYCLE_STATUSES", []],
   ["cycle_stages", "perspective", "EVALUATOR_TYPES", []],

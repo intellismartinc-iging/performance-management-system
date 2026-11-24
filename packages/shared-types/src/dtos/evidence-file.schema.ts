@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  bigintIdSchema,
-  decimalSchema,
-  idSchema,
-  timestampSchema,
-} from "../common.js";
+import { decimalSchema, idSchema, timestampSchema } from "../common.js";
 
 /**
  * No table in schema.sql stores files yet, so this DTO is hand written.
@@ -12,7 +7,7 @@ import {
  */
 export const evidenceFileDtoSchema = z.object({
   id: idSchema,
-  companyId: bigintIdSchema,
+  company: z.string(),
   uploadedBy: idSchema,
   journalEntryId: idSchema.nullable(),
   filename: z.string(),

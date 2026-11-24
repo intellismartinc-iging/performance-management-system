@@ -5,21 +5,21 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.journal_entries (
-    entry_id, employee_id, author_id, company_id, entry_date, entry_type,
+    entry_id, employee_id, author_id, company, entry_date, entry_type,
     title, description, cycle_id, created_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000221',
    '00000000-0000-0000-0000-000000000021',
    '00000000-0000-0000-0000-000000000021',
-   1,
+   'Mayon Consolidated Inc.',
    '2026-11-04', 'progress',
    'Feature release', 'Shipped the performance dashboard to production.',
    '00000000-0000-0000-0000-000000000141', now())
 ON CONFLICT (entry_id) DO NOTHING;
 
 INSERT INTO pms.nte_notices (
-    notice_id, employee_id, company_id, category, subject, body,
+    notice_id, employee_id, company, category, subject, body,
     explanation_deadline, incident_date, incident_reference, status,
     explanation_text, explanation_submitted_at, early_close_reason, cancel_reason,
     issued_by, issued_at, closed_by, closed_at,
@@ -28,7 +28,7 @@ INSERT INTO pms.nte_notices (
 VALUES
   ('00000000-0000-0000-0000-000000000231',
    '00000000-0000-0000-0000-000000000021',
-   1,
+   'Mayon Consolidated Inc.',
    'conduct',
    'Unapproved overtime',
    'You logged two days of overtime without prior approval.',

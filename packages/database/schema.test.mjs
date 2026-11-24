@@ -190,3 +190,51 @@ test("the employee and user seeds load in foreign-key order and match the backen
   assert.match(seed, /'\$2[aby]\$10\$[./A-Za-z0-9]{53}'/);
   assert.doesNotMatch(seed, /INSERT INTO pms\.users \([^)]*\bpassword\b[^_]/);
 });
+
+test("every REFERENCES target is a table that schema.sql creates", () => {
+  const schema = readSchema();
+  const created = new Set(
+    [...schema.matchAll(/CREATE TABLE IF NOT EXISTS (pms\.\w+)/g)].map((m) => m[1]),
+  );
+  const missing = [
+    ...new Set(
+      [...schema.matchAll(/REFERENCES (pms\.\w+)\s*\(/g)]
+        .map((m) => m[1])
+        .filter((target) => !created.has(target)),
+    ),
+  ];
+  assert.deepEqual(missing, []);
+});
+
+test("the company and position migration only expands: it drops no column and reads no public table", () => {
+  const sql = readFileSync(
+    new URL("./migrations/2026-11-24-kpi-company-position-text.sql", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(sql, /DROP\s+COLUMN/i);
+  assert.doesNotMatch(sql, /DROP\s+TABLE/i);
+  assert.doesNotMatch(sql, /\bpublic\./i);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS company text/);
+  assert.match(sql, /position/);
+});
+
+test("the behavioral template details migration only adds columns and checks", () => {
+  const sql = readFileSync(
+    new URL("./migrations/2026-11-24-behavioral-template-details.sql", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(sql, /DROP\s+(COLUMN|TABLE)/i);
+  assert.doesNotMatch(sql, /\bpublic\./i);
+  for (const column of ["name", "description", "category", "review_type"]) {
+    assert.match(sql, new RegExp(`ADD COLUMN IF NOT EXISTS ${column} text`));
+  }
+  // The same code lists as schema/behavioral-assessments.sql, so a migrated database accepts the same values.
+  const schema = readSchema();
+  for (const list of [
+    "'general_performance','self_assessment','manager_evaluation','peer_feedback','feedback_360','probationary_evaluation','others'",
+    "'self','manager','peer','upward','hr','others'",
+  ]) {
+    assert.ok(schema.includes(list), "schema.sql lacks " + list);
+    assert.ok(sql.includes(list), "the migration lacks " + list);
+  }
+});

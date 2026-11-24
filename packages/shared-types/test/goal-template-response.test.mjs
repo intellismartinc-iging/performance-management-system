@@ -8,8 +8,8 @@ import * as shared from "../dist/index.js";
 
 const template = {
   templateId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-  positionId: "7",
-  companyId: "1",
+  position: "Software Engineer",
+  company: "Mayon Consolidated Inc.",
   name: "Software Engineer Performance Goals",
   description: null,
   status: "draft",
@@ -47,26 +47,26 @@ const indicator = {
   useForScoring: false,
 };
 
-test("list item accepts a bigint position, a title, and a count as strings", () => {
+test("list item accepts a position name and a count as a string", () => {
   const item = shared.goalTemplateListResponseSchema.parse([
-    { ...template, positionTitle: "Software Engineer", indicatorCount: "4" },
+    { ...template, indicatorCount: "4" },
   ])[0];
-  assert.equal(item.positionId, 7);
-  assert.equal(item.positionTitle, "Software Engineer");
+  assert.equal(item.position, "Software Engineer");
+  assert.equal("positionTitle" in item, false);
   assert.equal(item.indicatorCount, 4);
   assert.equal(item.status, "draft");
 });
 
-test("list item accepts a company-wide template with no position title", () => {
+test("list item accepts a company-wide template with no position", () => {
   const item = shared.goalTemplateListResponseSchema.parse([
-    { ...template, positionId: null, positionTitle: null, indicatorCount: 0 },
+    { ...template, position: null, indicatorCount: 0 },
   ])[0];
-  assert.equal(item.positionTitle, null);
+  assert.equal(item.position, null);
 });
 
 test("list item rejects a negative indicator count", () => {
   const result = shared.goalTemplateListResponseSchema.safeParse([
-    { ...template, positionTitle: null, indicatorCount: -1 },
+    { ...template, indicatorCount: -1 },
   ]);
   assert.equal(result.success, false);
 });
@@ -111,7 +111,7 @@ test("detail accepts a template with no version yet", () => {
     matrixCells: [],
   });
   assert.equal(detail.version, null);
-  assert.equal(detail.template.positionId, 7);
+  assert.equal(detail.template.position, "Software Engineer");
 });
 
 test("detail rejects an unknown status code", () => {

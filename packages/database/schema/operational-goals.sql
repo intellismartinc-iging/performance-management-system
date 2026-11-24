@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS pms.operational_goals (
     goal_id          uuid PRIMARY KEY,
     owner_id         uuid NOT NULL REFERENCES pms.employees(guid),
     creator_id       uuid NOT NULL REFERENCES pms.employees(guid),
-    company_id       bigint NOT NULL REFERENCES pms.companies(company_id),
+    company          text NOT NULL,
     name             text NOT NULL,
     description      text,
     category         text NOT NULL CHECK (category IN ('quality','delivery','growth','collaboration')),
