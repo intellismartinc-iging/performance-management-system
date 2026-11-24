@@ -11,6 +11,7 @@ import {
   getGoalTemplate,
   getGoalTemplatePositions,
 } from "@/features/review-templates/services/goal-template-reader";
+import { toPositionOptions } from "@/features/review-templates/services/goal-template-format";
 
 export const metadata: Metadata = { title: "Edit KPI Goal Template" };
 
@@ -38,10 +39,7 @@ async function EditKpiGoalTemplate({ params }: EditKpiGoalTemplatePageProps) {
     <GoalTemplateEditForm
       key={stateKey(result.data)}
       detail={result.data}
-      positions={positions.data.map((position) => ({
-        value: String(position.positionId),
-        label: position.title,
-      }))}
+      positions={toPositionOptions(positions.data, result.data.template.position)}
     />
   );
 }

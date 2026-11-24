@@ -17,6 +17,7 @@ import { GoalTemplateCreateForm } from "@/features/review-templates/components/g
 import { GoalTemplateNotice } from "@/features/review-templates/components/goal-template-notice";
 import { GOAL_TEMPLATE_PATH } from "@/constants/goal-template-path";
 import { getGoalTemplatePositions } from "@/features/review-templates/services/goal-template-reader";
+import { toPositionOptions } from "@/features/review-templates/services/goal-template-format";
 
 const title = "KPI Goal Template Builder";
 
@@ -29,10 +30,7 @@ async function NewKpiGoalTemplate() {
   if (result.kind === "ok" && result.data.length > 0) {
     return (
       <GoalTemplateCreateForm
-        positions={result.data.map((position) => ({
-          value: String(position.positionId),
-          label: position.title,
-        }))}
+        positions={toPositionOptions(result.data)}
       />
     );
   }

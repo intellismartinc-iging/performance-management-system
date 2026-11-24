@@ -2,7 +2,6 @@
 
 import {
   idSchema,
-  readApiError,
   saveGoalTemplateRequestSchema,
 } from "@pms/shared-types";
 import { cookies } from "next/headers";
@@ -14,6 +13,7 @@ import {
   postPublishGoalTemplate,
   postUpdateGoalTemplate,
 } from "@/features/review-templates/api/goal-template-requests";
+import { apiErrorText } from "@/features/review-templates/services/api-error-text";
 import { GOAL_TEMPLATE_PATH } from "@/constants/goal-template-path";
 
 type ActionResult = { message: string };
@@ -28,7 +28,7 @@ function failureOf(response: Response, fallback = COULD_NOT_SAVE): string | null
   if (!response) return fallback;
   if (response.status === 200) return null;
   if (response.status === 401) return LOG_IN_AGAIN;
-  return readApiError(response.data)?.message ?? fallback;
+  return apiErrorText(response.data, fallback);
 }
 
 /** A server action takes any string from the client, and the id goes into a request path. */

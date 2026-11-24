@@ -10,7 +10,7 @@ interface Item {
   id: string;
   status: "draft" | "published" | "archived";
   name: string | null;
-  positionTitle: string | null;
+  position: string | null;
 }
 
 const DEFAULTS: GoalTemplateListParams = {
@@ -27,7 +27,7 @@ function item(
   title: string | null,
   name: string | null = null,
 ): Item {
-  return { id, status, name, positionTitle: title };
+  return { id, status, name, position: title };
 }
 
 const ITEMS = [

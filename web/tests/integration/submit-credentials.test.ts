@@ -1,36 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApiError } from "@pms/shared-types";
 import { submitCredentials } from "@/features/auth/services/submit-credentials";
 
-const { post, setCookie, redirect } = vi.hoisted(() => ({
+const { post, setCookie } = vi.hoisted(() => ({
   post: vi.fn(),
   setCookie: vi.fn(),
-  redirect: vi.fn((path: string) => {
-    throw new Error(path);
-  }),
 }));
 
 vi.mock("@/api/api-client", () => ({ apiClient: { post } }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ set: setCookie }) }));
-vi.mock("next/navigation", () => ({ redirect }));
 
-const account = {
-  employeeCode: "E001",
-  password: "example-password",
-  confirmPassword: "example-password",
-};
-const created = {
-  message: "Account created",
-  data: {
-    code: "E001",
-    firstName: "Jane",
-    lastName: "Doe",
-    company: "",
-    department: "",
-    position: "",
-    status: "active",
-  },
-};
+const password = "example-password";
 
 describe("submitCredentials", () => {
   beforeEach(() => {
@@ -49,14 +28,11 @@ describe("submitCredentials", () => {
     });
 
     await expect(
-      submitCredentials("login", {
-        identifier: "janedoe",
-        password: account.password,
-      }),
+      submitCredentials("login", { identifier: "janedoe", password }),
     ).resolves.toMatchObject({ isSuccess: true });
     expect(post).toHaveBeenCalledWith(
       "http://localhost:4000/auth/login",
-      { identifier: "janedoe", password: account.password },
+      { identifier: "janedoe", password },
       expect.any(Object),
     );
     expect(setCookie).toHaveBeenCalledWith(
@@ -70,66 +46,26 @@ describe("submitCredentials", () => {
     post.mockResolvedValueOnce({ status: 401, data: {} });
 
     await expect(
-      submitCredentials("login", {
-        identifier: "janedoe",
-        password: account.password,
-      }),
+      submitCredentials("login", { identifier: "janedoe", password }),
     ).resolves.toMatchObject({ kind: "invalidCredentials" });
     expect(setCookie).not.toHaveBeenCalled();
   });
 
-  it("creates a login for an existing PMS employee", async () => {
-    post.mockResolvedValueOnce({ status: 200, data: created });
+  it.each(["sign-up", "register"])(
+    "refuses the removed %s mode and sends no request",
+    async (mode) => {
+      const body = {
+        employeeCode: "E001",
+        username: "janedoe",
+        password,
+        confirmPassword: password,
+      };
 
-    const signUp = { ...account, username: "janedoe" };
-    await expect(submitCredentials("sign-up", signUp)).resolves.toMatchObject({
-      isSuccess: true,
-    });
-    expect(post).toHaveBeenCalledWith(
-      "http://localhost:4000/auth/sign-up",
-      signUp,
-      expect.any(Object),
-    );
-    expect(setCookie).not.toHaveBeenCalled();
-  });
-
-  it("registers an HRDotNet employee with nullable employment fields and redirects to login", async () => {
-    post.mockResolvedValueOnce({
-      status: 200,
-      data: {
-        ...created,
-        data: {
-          ...created.data,
-          company: null,
-          department: null,
-          position: null,
-        },
-      },
-    });
-
-    await expect(submitCredentials("register", account)).rejects.toThrow(
-      "/login",
-    );
-    expect(post).toHaveBeenCalledWith(
-      "http://localhost:4000/auth/register",
-      account,
-      expect.any(Object),
-    );
-    expect(setCookie).not.toHaveBeenCalled();
-  });
-
-  it("shows the backend message when the HRDotNet employee is missing", async () => {
-    post.mockResolvedValueOnce({
-      status: 404,
-      data: createApiError({
-        status: 404,
-        message: "Employee not found",
-        correlationId: "test",
-      }),
-    });
-
-    await expect(submitCredentials("register", account)).resolves.toEqual({
-      message: "Employee not found",
-    });
-  });
+      await expect(submitCredentials(mode, body)).resolves.toEqual({
+        message: "Check your details and try again.",
+      });
+      expect(post).not.toHaveBeenCalled();
+      expect(setCookie).not.toHaveBeenCalled();
+    },
+  );
 });

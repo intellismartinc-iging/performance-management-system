@@ -10,6 +10,7 @@ import {
   getGoalTemplate,
   getGoalTemplatePositions,
 } from "@/features/review-templates/services/goal-template-reader";
+import { toPositionOptions } from "@/features/review-templates/services/goal-template-format";
 
 export const metadata: Metadata = { title: "KPI Goal Template Details" };
 
@@ -31,14 +32,10 @@ async function KpiGoalTemplateRecord({ params }: KpiGoalTemplatePageProps) {
     <GoalTemplateDetailsView
       key={stateKey(result.data)}
       detail={result.data}
-      positions={
-        positions.kind === "ok"
-          ? positions.data.map((position) => ({
-              value: String(position.positionId),
-              label: position.title,
-            }))
-          : []
-      }
+      positions={toPositionOptions(
+        positions.kind === "ok" ? positions.data : [],
+        result.data.template.position,
+      )}
     />
   );
 }

@@ -10,41 +10,43 @@ import { toMatrixInput } from "@/features/review-templates/services/indicator-ma
 
 /**
  * Editor drafts to API request bodies. Use `safeParse` results: a draft can be
- * incomplete, and the caller decides what to show. The behavioral template
- * tables still have no name or description column, so that editor does not send them.
+ * incomplete, and the caller decides what to show.
  */
 
 export function toSaveBehavioralTemplateRequest(template: BehavioralTemplate) {
   return saveBehavioralTemplateRequestSchema.safeParse({
+    name: template.name,
+    description: template.description,
+    category: template.category,
+    reviewType: template.reviewType,
     sections: template.sections.map((section) => ({
       title: section.name,
       questions: section.questions.map((question) => ({
         prompt: question.title,
         questionType: question.type,
         isRequired: question.required,
-        canMarkNotObserved: question.type === "rating_scale" ? false : null,
-        choices:
+        allowNotObserved: question.type === "rating_scale" ? question.notObserved : null,
+        choiceOptions:
           question.type === "multiple_choice"
             ? question.choices
-                .split(/\r?\n/)
                 .map((choice) => choice.trim())
                 .filter(Boolean)
+                .map((label) => ({ label }))
             : [],
       })),
     })),
   });
 }
 
-/** `template.position` is the id of a position, as a string from the select. */
+/** `template.position` is the position name from the select. An empty value is company-wide. */
 export function toSaveGoalTemplateRequest(
   template: KpiGoalTemplate,
   options: { keepIds?: boolean } = {},
 ) {
-  const positionId = Number(template.position);
   return saveGoalTemplateRequestSchema.safeParse({
     name: template.name,
     description: template.description,
-    positionId: Number.isInteger(positionId) ? positionId : null,
+    position: template.position.trim() === "" ? null : template.position.trim(),
     indicators: template.indicators.map((indicator) => ({
       // Only an indicator that came from the server has a real id: a new one is "indicator-2".
       indicatorId:

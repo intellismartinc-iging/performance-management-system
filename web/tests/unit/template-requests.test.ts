@@ -6,7 +6,7 @@ import { toSaveGoalTemplateRequest } from "@/features/review-templates/services/
 const TEMPLATE: KpiGoalTemplate = {
   name: "  Software Engineer Performance Goals ",
   description: " Position targets ",
-  position: "12",
+  position: "Software Engineer",
   indicators: [
     {
       id: "indicator-1",
@@ -31,7 +31,7 @@ describe("toSaveGoalTemplateRequest", () => {
     expect(result.data).toMatchObject({
       name: "Software Engineer Performance Goals",
       description: "Position targets",
-      positionId: 12,
+      position: "Software Engineer",
     });
     expect(result.data?.indicators[0]).toMatchObject({ scoreBelowTarget: 3.5 });
   });

@@ -5,27 +5,32 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export type GoalTemplateNoticeKind = "signed_out" | "forbidden" | "unavailable";
 
 const NOTICES = {
-  signed_out: {
+  signed_out: (subject: string) => ({
     title: "Session ended",
-    description: "Log in again to see KPI goal templates.",
-  },
-  forbidden: {
+    description: `Log in again to see ${subject}.`,
+  }),
+  forbidden: (subject: string) => ({
     title: "HR access required",
-    description:
-      "Only HR administrators whose account is linked to a company can open KPI goal templates. If you are HR, ask your administrator to link your account.",
-  },
-  unavailable: {
+    description: `Only HR administrators whose account is linked to a company can open ${subject}. If you are HR, ask your administrator to link your account.`,
+  }),
+  unavailable: (subject: string) => ({
     title: "Templates are unavailable",
-    description:
-      "We could not load KPI goal templates. Reload the page, or try again in a few minutes.",
-  },
+    description: `We could not load ${subject}. Reload the page, or try again in a few minutes.`,
+  }),
 } as const satisfies Record<
   GoalTemplateNoticeKind,
-  { title: string; description: string }
+  (subject: string) => { title: string; description: string }
 >;
 
-export function GoalTemplateNotice({ kind }: { kind: GoalTemplateNoticeKind }) {
-  const { title, description } = NOTICES[kind];
+/** `subject` names the templates in the text: the same notice serves KPI goal and behavioral templates. */
+export function GoalTemplateNotice({
+  kind,
+  subject = "KPI goal templates",
+}: {
+  kind: GoalTemplateNoticeKind;
+  subject?: string;
+}) {
+  const { title, description } = NOTICES[kind](subject);
   return (
     <Alert variant="destructive" role="alert">
       <TriangleAlertIcon aria-hidden="true" />

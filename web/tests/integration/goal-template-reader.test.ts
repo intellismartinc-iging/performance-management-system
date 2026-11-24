@@ -25,8 +25,8 @@ import {
 const TEMPLATE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const template = {
   templateId: TEMPLATE_ID,
-  positionId: "7",
-  companyId: "1",
+  position: "Software Engineer",
+  company: "Mayon Consolidated Inc.",
   name: "Software Engineer Performance Goals",
   description: null,
   status: "draft",
@@ -49,7 +49,7 @@ describe("getGoalTemplates", () => {
   it("sends the session token and parses the list", async () => {
     fetchGoalTemplates.mockResolvedValue({
       status: 200,
-      data: [{ ...template, positionTitle: "Software Engineer", indicatorCount: "4" }],
+      data: [{ ...template, indicatorCount: "4" }],
     });
 
     const result = await getGoalTemplates();
@@ -57,7 +57,7 @@ describe("getGoalTemplates", () => {
     expect(fetchGoalTemplates).toHaveBeenCalledWith("token");
     expect(result).toMatchObject({
       kind: "ok",
-      data: [{ positionId: 7, positionTitle: "Software Engineer", indicatorCount: 4 }],
+      data: [{ position: "Software Engineer", indicatorCount: 4 }],
     });
   });
 
@@ -122,7 +122,7 @@ describe("getGoalTemplate", () => {
     expect(fetchGoalTemplate).toHaveBeenCalledWith("token", TEMPLATE_ID);
     expect(result).toMatchObject({
       kind: "ok",
-      data: { template: { positionId: 7 } },
+      data: { template: { position: "Software Engineer" } },
     });
   });
 });
@@ -131,7 +131,7 @@ describe("getGoalTemplatePositions", () => {
   it("sends the session token and parses the positions", async () => {
     fetchGoalTemplatePositions.mockResolvedValue({
       status: 200,
-      data: [{ positionId: "11", title: "Software Engineer" }],
+      data: ["Software Engineer"],
     });
 
     const result = await getGoalTemplatePositions();
@@ -139,7 +139,7 @@ describe("getGoalTemplatePositions", () => {
     expect(fetchGoalTemplatePositions).toHaveBeenCalledWith("token");
     expect(result).toEqual({
       kind: "ok",
-      data: [{ positionId: 11, title: "Software Engineer" }],
+      data: ["Software Engineer"],
     });
   });
 

@@ -17,7 +17,7 @@ it("clears both fields before navigating after a successful login", async () => 
     message: "Logged in.",
   });
   const user = userEvent.setup();
-  render(<CredentialsForm mode="login" />);
+  render(<CredentialsForm />);
   const identifier = screen.getByLabelText("Email or username");
   const password = screen.getByLabelText("Password");
   await user.type(identifier, "admin001");
@@ -31,7 +31,7 @@ it("clears both fields before navigating after a successful login", async () => 
 
 it("clears login credentials when restoring the page from browser history", async () => {
   const user = userEvent.setup();
-  render(<CredentialsForm mode="login" />);
+  render(<CredentialsForm />);
   const identifier = screen.getByLabelText("Email or username");
   const password = screen.getByLabelText("Password");
   await user.type(identifier, "admin001");
@@ -53,7 +53,7 @@ it("shows backend validation on the matching inputs and keeps unmapped messages 
     ],
   });
   const user = userEvent.setup();
-  render(<CredentialsForm mode="login" />);
+  render(<CredentialsForm />);
   const identifier = screen.getByLabelText("Email or username");
   const password = screen.getByLabelText("Password");
   await user.type(identifier, "admin001");
@@ -74,7 +74,7 @@ it("marks both login fields invalid and links them to one inline error", async (
     kind: "invalidCredentials",
   });
   const user = userEvent.setup();
-  render(<CredentialsForm mode="login" />);
+  render(<CredentialsForm />);
   const identifier = screen.getByLabelText("Email or username");
   const password = screen.getByLabelText("Password");
 

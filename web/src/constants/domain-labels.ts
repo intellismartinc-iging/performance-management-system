@@ -1,5 +1,7 @@
 import type {
   BehavioralQuestionType,
+  BehavioralReviewType,
+  BehavioralTemplateCategory,
   CycleStatus,
   EvaluationStatus,
   EvaluatorType,
@@ -133,6 +135,26 @@ export const BEHAVIORAL_QUESTION_TYPE_LABELS = {
   short_answer: "Short answer",
   paragraph: "Long answer",
 } as const satisfies Record<BehavioralQuestionType, string>;
+
+/** Others is a label only: it has no text of its own. */
+export const BEHAVIORAL_TEMPLATE_CATEGORY_LABELS = {
+  general_performance: "General Performance",
+  self_assessment: "Self-Assessment",
+  manager_evaluation: "Manager Evaluation",
+  peer_feedback: "Peer Feedback",
+  feedback_360: "360° Feedback",
+  probationary_evaluation: "Probationary Evaluation",
+  others: "Others",
+} as const satisfies Record<BehavioralTemplateCategory, string>;
+
+export const BEHAVIORAL_REVIEW_TYPE_LABELS = {
+  self: "Self",
+  manager: "Manager",
+  peer: "Peer",
+  upward: "Upward",
+  hr: "HR",
+  others: "Others",
+} as const satisfies Record<BehavioralReviewType, string>;
 
 export const EVALUATOR_TYPE_LABELS = {
   self: "Self",

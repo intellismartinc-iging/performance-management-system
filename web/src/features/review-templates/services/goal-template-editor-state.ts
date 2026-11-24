@@ -93,7 +93,7 @@ export function fromGoalTemplateDetail(detail: Detail): KpiGoalTemplate {
   return {
     name: text(detail.template.name),
     description: text(detail.template.description),
-    position: text(detail.template.positionId),
+    position: text(detail.template.position),
     indicators: detail.indicators.map((indicator) => indicatorOf(detail, indicator)),
   };
 }

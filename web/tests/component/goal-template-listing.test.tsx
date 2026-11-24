@@ -13,8 +13,8 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 const PATH = "/reviews/templates/kpi-goal-template";
 const ROW = {
   templateId: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-  positionId: 11,
-  companyId: 1,
+  position: "Software Engineer",
+  company: "Mayon Consolidated Inc.",
   name: "Software Engineer Performance Goals",
   description: null,
   status: "published" as const,
@@ -24,7 +24,6 @@ const ROW = {
   archivedAt: null,
   createdAt: "2026-11-01T00:00:00.000Z",
   updatedAt: "2026-11-05T00:00:00.000Z",
-  positionTitle: "Software Engineer",
   indicatorCount: 3,
 };
 
