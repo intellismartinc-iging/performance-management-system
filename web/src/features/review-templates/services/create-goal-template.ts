@@ -2,7 +2,6 @@
 
 import {
   goalTemplateDetailResponseSchema,
-  readApiError,
   saveGoalTemplateRequestSchema,
 } from "@pms/shared-types";
 import { cookies } from "next/headers";
@@ -13,6 +12,7 @@ import {
   postCreateGoalTemplate,
   postPublishGoalTemplate,
 } from "@/features/review-templates/api/goal-template-requests";
+import { apiErrorText } from "@/features/review-templates/services/api-error-text";
 import { GOAL_TEMPLATE_PATH } from "@/constants/goal-template-path";
 
 type CreateResult = { message: string };
@@ -27,10 +27,10 @@ async function createDraft(accessToken: string, body: unknown) {
   if (response.status === 401) return { message: LOG_IN_AGAIN };
   if (response.status === 403) {
     // A 403 is the role, or an account with no linked company: show which.
-    return { message: readApiError(response.data)?.message ?? NOT_HR };
+    return { message: apiErrorText(response.data, NOT_HR) };
   }
   if (response.status !== 200) {
-    return { message: readApiError(response.data)?.message ?? COULD_NOT_SAVE };
+    return { message: apiErrorText(response.data, COULD_NOT_SAVE) };
   }
 
   const created = goalTemplateDetailResponseSchema.safeParse(response.data);

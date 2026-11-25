@@ -17,7 +17,7 @@ PMS is a pnpm monorepo with two applications and two internal packages.
 - `packages/shared-types` holds the Zod contracts (enums, generated row schemas, request and response schemas, shared rules) that `web` and `backend` both import.
 - `packages/database` holds the PostgreSQL schema, the development seed, and the init script.
 
-The API is the only component that reads or writes a database. It holds two connections: the main PostgreSQL database (read and write) and the HRDotNet SQL Server database (read only).
+The API is the only component that reads or writes a database. It holds one connection: the PostgreSQL database, schema `pms` (read and write).
 
 ```mermaid
 graph TD
@@ -28,8 +28,7 @@ graph TD
   Api --> Guards["JwtAuthGuard, AdminRoleGuard"]
   Guards --> Controllers["Controllers"]
   Controllers --> Services["Services"]
-  Services -->|"TypeORM, synchronize: true"| Pg[("PostgreSQL<br/>main database")]
-  Services -->|"TypeORM, read only"| Mssql[("SQL Server<br/>HRDotNet")]
+  Services -->|"TypeORM, synchronize: false"| Pg[("PostgreSQL<br/>schema pms")]
   Contracts["@pms/shared-types<br/>(Zod contracts)"] -.-> Pages
   Contracts -.-> Actions
   Contracts -.-> Controllers
@@ -41,14 +40,13 @@ What the system does not have today: no API gateway or reverse proxy in the repo
 
 ### 1.1 Runtime components
 
-| Component         | Where it runs                                             | Responsibility                                               | Entry point                                             |
-| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
-| Web app           | Node 24, Next.js 16.4 (`cacheComponents`, React Compiler) | Pages, session gate, server actions, UI                      | `web/src/app/layout.tsx`, `web/src/proxy.ts`            |
-| API               | Node 24, NestJS 12                                        | Authentication, authorization, business rules, persistence   | `backend/src/main.ts`                                   |
-| Main database     | PostgreSQL                                                | System of record for PMS data                                | Connection in `backend/src/app.module.ts`               |
-| HRDotNet database | SQL Server                                                | Read-only source of HR accounts and employees                | `secondaryDB` connection in `backend/src/app.module.ts` |
-| Contracts package | Built to `dist/` with `tsc`                               | Zod schemas and shared rules for both apps                   | `packages/shared-types/src/index.ts`                    |
-| Database package  | Node script                                               | Creates the database, applies `schema.sql`, loads `seed.sql` | `packages/database/init-db.mjs`                         |
+| Component         | Where it runs                                             | Responsibility                                               | Entry point                                  |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------- |
+| Web app           | Node 24, Next.js 16.4 (`cacheComponents`, React Compiler) | Pages, session gate, server actions, UI                      | `web/src/app/layout.tsx`, `web/src/proxy.ts` |
+| API               | Node 24, NestJS 12                                        | Authentication, authorization, business rules, persistence   | `backend/src/main.ts`                        |
+| Main database     | PostgreSQL                                                | System of record for PMS data                                | Connection in `backend/src/app.module.ts`    |
+| Contracts package | Built to `dist/` with `tsc`                               | Zod schemas and shared rules for both apps                   | `packages/shared-types/src/index.ts`         |
+| Database package  | Node script                                               | Creates the database, applies `schema.sql`, loads `seed.sql` | `packages/database/init-db.mjs`              |
 
 Ports in development: the web app listens on 3000. The API reads `PORT` (default 3000), so set it to 4000 to run both. Swagger is at `/swagger` on the API.
 
@@ -56,17 +54,17 @@ Deployment targets are not recorded in the repository. `docs/workspace-blueprint
 
 ### 1.2 Implementation status
 
-| Area                                                                              | State                                                                                                                                                                                            |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Authentication (login, sign-up, register, refresh, current user)                  | Wired end to end: web server action, API, httpOnly cookie, route gate                                                                                                                            |
-| Workspace shell (sidebar by role, header, notification menu, account menu, theme) | Built                                                                                                                                                                                            |
-| KPI Goal Templates (list, details, create, edit, publish, new version)            | Wired end to end across shared-types, backend, and web                                                                                                                                           |
-| Employees API                                                                     | Built in the backend. The web `employees` page is a placeholder                                                                                                                                  |
-| Behavioral assessment templates API                                               | Built in the backend. The web page is a placeholder and `behavioral-template-editor.tsx` is not routed                                                                                           |
-| Review cycles, evaluations, position goals components                             | Components exist in `web/src/features`. No page uses them. `review-cycles/page.tsx` shows that the service is not connected                                                                      |
-| Placeholder pages                                                                 | `202-files`, `employees`, `goals`, `my-team`, `pip`, `reports`, `reviews`, `behavioral-assessment-template`                                                                                      |
-| Dashboard                                                                         | Page header only                                                                                                                                                                                 |
-| Database tables                                                                   | 41 tables in schema `pms` (`packages/database/schema/`) plus `public.users`. Backend entities exist only for accounts, employees, roles, KPI goal templates, and behavioral assessment templates |
+| Area                                                                              | State                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication (login, refresh, current user)                                     | Wired end to end: web server action, API, httpOnly cookie, route gate                                                                                                                          |
+| Workspace shell (sidebar by role, header, notification menu, account menu, theme) | Built                                                                                                                                                                                          |
+| KPI Goal Templates (list, details, create, edit, publish, new version)            | Wired end to end across shared-types, backend, and web                                                                                                                                         |
+| Employees API                                                                     | Built in the backend. The web `employees` page is a placeholder                                                                                                                                |
+| Behavioral assessment templates API                                               | Built in the backend. The web page is a placeholder and `behavioral-template-editor.tsx` is not routed                                                                                         |
+| Review cycles, evaluations, position goals components                             | Components exist in `web/src/features`. No page uses them. `review-cycles/page.tsx` shows that the service is not connected                                                                    |
+| Placeholder pages                                                                 | `202-files`, `employees`, `goals`, `my-team`, `pip`, `reports`, `reviews`, `behavioral-assessment-template`                                                                                    |
+| Dashboard                                                                         | Page header only                                                                                                                                                                               |
+| Database tables                                                                   | 39 tables in schema `pms` (`packages/database/schema/`), none in `public`. Backend entities exist only for accounts, employees, roles, KPI goal templates, and behavioral assessment templates |
 
 ---
 
@@ -78,7 +76,7 @@ Versions come from the manifests (`package.json` files and `pnpm-workspace.yaml`
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Language            | TypeScript. Catalog `5.9.3` (root, web, shared-types). Backend pins `^6.0.2`                                                                                                                                 | Not recorded                | `docs/workspace-blueprint.md`: the backend keeps its own TypeScript, Vitest, `@types/node`, and `axios` versions until the backend team moves them |
 | Runtime             | Node 24 (CI `node-version: 24`). Web types use `@types/node` 20, backend types use 24                                                                                                                        | Not recorded                | Not recorded                                                                                                                                       |
-| Package manager     | pnpm 12.14.0 (`packageManager` in root `package.json`). Version catalog in `pnpm-workspace.yaml` for `eslint`, `prettier`, `typescript`, `zod`                                                               | Not recorded                | One version for tools that more than one package uses                                                                                              |
+| Package manager     | pnpm 12.23.0 (`packageManager` in root `package.json`). Version catalog in `pnpm-workspace.yaml` for `eslint`, `prettier`, `typescript`, `zod`                                                               | Not recorded                | One version for tools that more than one package uses                                                                                              |
 | Web framework       | Next.js 16.4.5, App Router, `cacheComponents`, `partialPrefetching`, React Compiler, Turbopack                                                                                                               | Not recorded                | Not recorded                                                                                                                                       |
 | UI                  | React 19.3.0, Tailwind CSS 4, shadcn CLI `^4.23` on `@base-ui/react` `^1.9`, `lucide-react`, Recharts 3.8.0                                                                                                  | Not recorded                | Design rules are in `web/DESIGN.md` and `web/llm.txt`                                                                                              |
 | Web state and forms | TanStack Query `^5.107`, TanStack Table `^9.3`, Zustand `^5.1`, react-hook-form `^7.91`, `@hookform/resolvers`                                                                                               | Not recorded                | `web/llm.txt`: Zustand for client UI state, TanStack Query for server state, never Zustand for server records                                      |
@@ -86,8 +84,7 @@ Versions come from the manifests (`package.json` files and `pnpm-workspace.yaml`
 | API validation      | `class-validator` `^0.15` and `class-transformer` with a global `ValidationPipe`. Zod for environment variables                                                                                              | Not recorded                | Request DTOs stay consistent with the shared Zod contracts (`backend/AGENTS.md`)                                                                   |
 | Contracts           | Zod `^4.6.7` (catalog) in `@pms/shared-types`                                                                                                                                                                | Not recorded                | One definition of each enum, row, and request shape for both apps                                                                                  |
 | Primary datastore   | PostgreSQL. Version not recorded. Default dev port 5433                                                                                                                                                      | Not recorded                | Not recorded                                                                                                                                       |
-| Second datastore    | SQL Server (HRDotNet), `mssql` `^12.7`, read only, `synchronize: false`                                                                                                                                      | Not recorded                | HRDotNet is the source of HR accounts and employees                                                                                                |
-| ORM                 | TypeORM `^1.1.2` with `synchronize: true` on the main connection                                                                                                                                             | Not recorded                | `docs/workspace-blueprint.md` records an open decision: the SQL modules should own the schema and the entities should follow them                  |
+| ORM                 | TypeORM `^1.1.2` with `synchronize: false` (the SQL files own the tables)                                                                                                                                    | Not recorded                | `docs/workspace-blueprint.md` records the rule: the SQL files own the schema, and `backend/src/entity-schema.spec.ts` keeps every entity in `pms`  |
 | Password hashing    | `bcryptjs` `^3` in `AuthService`. `bcrypt` `^6` is also a dependency                                                                                                                                         | Not recorded                | Not recorded                                                                                                                                       |
 | Cache               | None                                                                                                                                                                                                         | Not applicable              | Not applicable                                                                                                                                     |
 | Messaging and jobs  | None                                                                                                                                                                                                         | Not applicable              | Not applicable                                                                                                                                     |
@@ -105,9 +102,6 @@ The API validates its environment at startup in `backend/src/config/env.config.t
 | ------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
 | `PORT`                                                                                | backend | Number, default 3000                                                                                              |
 | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | backend | Defaults: `localhost`, 5433, `postgres`, `postgres`, empty. Not listed in `backend/.env.example`                  |
-| `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`                                | backend | Required, at least one character                                                                                  |
-| `DB_PORT`                                                                             | backend | Number, default 1433                                                                                              |
-| `DB_ENCRYPT`, `DB_TRUST_SERVER_CERTIFICATE`                                           | backend | Optional strings, compared with `"true"`                                                                          |
 | `DB_CONNECTION_TIMEOUT`, `DB_REQUEST_TIMEOUT`                                         | backend | Number of milliseconds, default 30000                                                                             |
 | `JWT_ACCESS_SECRET`                                                                   | backend | Required, not blank                                                                                               |
 | `PMS_API_BASE_URL`                                                                    | web     | Base URL of the API, `http` or `https` only. Without it, server actions report that the service is not configured |
@@ -139,8 +133,18 @@ performance-management-system/
 │   │   ├── 2026-11-13-auth-integration.md       # Auth integration
 │   │   ├── 2026-11-13-post-auth-integration.md  # Post-auth integration
 │   │   ├── 2026-11-19-kpi-goal-templates.md     # KPI Goal Templates module
+│   │   ├── 2026-11-20-session-kpi-verification-and-architecture-doc.md # KPI verification and the architecture doc
+│   │   ├── 2026-11-24-auth-pms-schema.md        # Auth and employees on the pms schema
+│   │   ├── 2026-11-24-behavioral-module-status.md
+│   │   ├── 2026-11-24-behavioral-template-details-and-edit.md
+│   │   ├── 2026-11-24-behavioral-template-new-version.md
+│   │   ├── 2026-11-24-behavioral-template-web.md
+│   │   ├── 2026-11-24-kpi-text-and-pms-only.md  # KPI after PR 8, pms only, text company
 │   │   └── README.md                            # Index of the handoffs
+│   ├── reviews/                                 # Reviews of a change
+│   │   └── 2026-11-24-auth-pms-schema-review.md # Review of PR 8 from the KPI side
 │   ├── api-contracts.md                         # Endpoints and response shapes
+│   ├── behavioral-assessment-web-integration.md # Paused scope note
 │   ├── coding-standards.md                      # Backend coding conventions
 │   ├── database-design.md                       # The logical model
 │   ├── database-schema.md                       # Tables and columns
@@ -207,7 +211,7 @@ performance-management-system/
 
 Each feature is one module under `src/modules/`. Every folder inside a module holds one kind of file and every file has one job.
 
-87 tracked files.
+86 tracked files.
 
 ```text
 backend/                                                # @pms/backend: NestJS API (expanded in 3.3)
@@ -226,26 +230,21 @@ backend/                                                # @pms/backend: NestJS A
 │   │   ├── env.config.spec.ts
 │   │   └── env.config.ts                               # Zod schema of the environment variables, checked at startup
 │   ├── modules/                                        # One folder per feature module
-│   │   ├── auth/                                       # Routes: sign-up, register, login, refresh-token, me
+│   │   ├── auth/                                       # Routes: login, refresh-token, me
 │   │   │   ├── controllers/
 │   │   │   │   ├── auth.controller.spec.ts
 │   │   │   │   └── auth.controller.ts
 │   │   │   ├── dtos/
-│   │   │   │   ├── auth-response.dto.ts
 │   │   │   │   ├── current-user-response.dto.ts
 │   │   │   │   ├── login.dto.ts
 │   │   │   │   ├── password-length.spec.ts
 │   │   │   │   ├── refresh-token.dto.ts
-│   │   │   │   ├── register.dto.ts
-│   │   │   │   ├── sign-up.dto.ts
 │   │   │   │   └── token-response.dto.ts
 │   │   │   ├── entities/
-│   │   │   │   ├── employee.entity.ts                  # public.employees (login chain)
-│   │   │   │   ├── hrdotnet.entity.ts                  # HRDotNet SQL Server tables (tEmployee, tEmploymentRecord, tSysUser), read only
 │   │   │   │   ├── user-role.entity.ts                 # user_role and ADMIN_ROLE_ID
 │   │   │   │   └── user.entity.ts                      # users: credentials, failed login count, lock time
 │   │   │   ├── services/
-│   │   │   │   ├── account-registration.service.ts     # Account creation for sign-up and register
+│   │   │   │   ├── account-registration.service.ts     # signUp(): no route calls it
 │   │   │   │   ├── auth.service.spec.ts
 │   │   │   │   └── auth.service.ts                     # Login with lockout, token issue and refresh, current user
 │   │   │   ├── strategies/
@@ -255,9 +254,11 @@ backend/                                                # @pms/backend: NestJS A
 │   │   │   └── auth.module.ts
 │   │   ├── behavioral-assessment/                      # Routes: list, get, create, update, published
 │   │   │   ├── controllers/
+│   │   │   │   ├── behavioral-assessment.controller.spec.ts
 │   │   │   │   └── behavioral-assessment.controller.ts
 │   │   │   ├── dtos/
 │   │   │   │   ├── behavioral-section.dto.ts
+│   │   │   │   ├── behavioral-template-contract.spec.ts
 │   │   │   │   ├── create-behavioral-template.dto.ts
 │   │   │   │   └── update-behavioral-template.dto.ts
 │   │   │   ├── entities/
@@ -282,8 +283,9 @@ backend/                                                # @pms/backend: NestJS A
 │   │   │   │   ├── list-employees-query.dto.ts
 │   │   │   │   └── update-employee.dto.ts
 │   │   │   ├── entities/
-│   │   │   │   └── employee-domain.entity.ts           # public.employees (directory)
+│   │   │   │   └── employee-domain.entity.ts           # pms.employees (directory)
 │   │   │   ├── guards/
+│   │   │   │   ├── admin-role.guard.spec.ts
 │   │   │   │   └── admin-role.guard.ts                 # Requires the admin role of the employee record
 │   │   │   ├── services/
 │   │   │   │   ├── employee.service.spec.ts
@@ -317,7 +319,8 @@ backend/                                                # @pms/backend: NestJS A
 │   │       ├── types/
 │   │       │   └── template-tree.types.ts
 │   │       └── kpi-goals.module.ts
-│   ├── app.module.ts                                   # Config, the two database connections, the feature modules
+│   ├── app.module.ts                                   # Config, the database connection, the feature modules
+│   ├── entity-schema.spec.ts                           # Every entity maps to schema pms
 │   └── main.ts                                         # Bootstrap: ValidationPipe, ApiExceptionFilter, Swagger at /swagger, listen on PORT
 ├── .env.example                                        # Names of the environment variables, no values
 ├── .gitignore
@@ -353,22 +356,22 @@ Tests sit next to the file they test (`auth.service.ts` and `auth.service.spec.t
 
 #### Persistence
 
-There is no separate repository layer. Services inject TypeORM repositories and the `DataSource` directly, and open a transaction with `dataSource.transaction(...)` for multi-step writes (used in `auth.service.ts`, `account-registration.service.ts`, and four places in `kpi-goals.service.ts`). The main PostgreSQL connection sets `synchronize: true`. There are no migration files: schema changes reach an existing database through hand-run SQL scripts (see section 5.2).
+There is no separate repository layer. Services inject TypeORM repositories and the `DataSource` directly, and open a transaction with `dataSource.transaction(...)` for multi-step writes (used in `auth.service.ts`, `account-registration.service.ts`, and four places in `kpi-goals.service.ts`). The PostgreSQL connection sets `synchronize: false`: the SQL files own the tables. The only migration file is `packages/database/migrations/2026-11-24-auth-tables-to-pms.sql`, which reads `public` and does not fit a `pms`-only database (see `docs/reviews/2026-11-24-auth-pms-schema-review.md`). Other schema changes reach an existing database through hand-run SQL scripts (see section 5.2).
 
 #### API surface
 
 | Controller                       | Base route               | Guards                                                                         | Routes                                                                                                                                |
 | -------------------------------- | ------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `AuthController`                 | `/auth`                  | `JwtAuthGuard` on `me` only                                                    | `POST sign-up`, `POST register`, `POST login`, `POST refresh-token`, `GET me`                                                         |
+| `AuthController`                 | `/auth`                  | `JwtAuthGuard` on `me` only                                                    | `POST login`, `POST refresh-token`, `GET me`                                                                                          |
 | `EmployeesController`            | `/employees`             | `JwtAuthGuard` on the class, `AdminRoleGuard` on `:id`, `create`, `:id/update` | `GET /`, `GET :id`, `POST create`, `POST :id/update`, `GET me/profile`                                                                |
 | `KpiGoalsController`             | `/kpi-goals`             | `JwtAuthGuard` and `AdminRoleGuard` on the class                               | `GET /`, `GET positions`, `GET :id`, `POST create`, `POST :id/update`, `POST :id/versions`, `POST :id/published`, `POST :id/archived` |
-| `BehavioralAssessmentController` | `/behavioral-assessment` | `JwtAuthGuard` on the class                                                    | `GET /`, `GET :id`, `POST create`, `POST :id/update`, `POST :id/published`                                                            |
+| `BehavioralAssessmentController` | `/behavioral-assessment` | `JwtAuthGuard` and `AdminRoleGuard` on the class                               | `GET /`, `GET :id`, `POST create`, `POST :id/update`, `POST :id/published`, `POST :id/versions`                                       |
 
 `GET kpi-goals/positions` stays declared before `GET :id`, because a route declared after `:id` is never reached.
 
 ### 3.4 `web/` (Next.js app)
 
-225 tracked files.
+248 tracked files.
 
 ```text
 web/                                                # @pms/web: Next.js app (expanded in 3.4)
@@ -390,10 +393,6 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   ├── (auth)/                                 # Signed-out pages
 │   │   │   ├── login/
 │   │   │   │   └── page.tsx
-│   │   │   ├── register/
-│   │   │   │   └── page.tsx
-│   │   │   ├── sign-up/
-│   │   │   │   └── page.tsx
 │   │   │   └── layout.tsx
 │   │   ├── (workspace)/                            # Signed-in pages
 │   │   │   ├── 202-files/
@@ -413,7 +412,13 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   │   ├── reviews/
 │   │   │   │   ├── templates/
 │   │   │   │   │   ├── behavioral-assessment-template/
-│   │   │   │   │   │   └── page.tsx                # Placeholder page
+│   │   │   │   │   │   ├── [templateId]/
+│   │   │   │   │   │   │   ├── edit/
+│   │   │   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   │   ├── new/
+│   │   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   │   └── page.tsx                # The list of templates
 │   │   │   │   │   └── kpi-goal-template/
 │   │   │   │   │       ├── [templateId]/
 │   │   │   │   │       │   ├── edit/
@@ -516,6 +521,7 @@ web/                                                # @pms/web: Next.js app (exp
 │   │       ├── toggle.tsx
 │   │       └── tooltip.tsx
 │   ├── constants/                                  # Static values
+│   │   ├── behavioral-template-path.ts
 │   │   ├── domain-labels.ts                        # The only place a domain code becomes words
 │   │   ├── goal-template-path.ts                   # Route of the KPI Goal Templates list
 │   │   ├── review-tones.ts
@@ -525,17 +531,16 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   ├── query-provider.tsx                      # TanStack Query client
 │   │   └── theme-provider.tsx
 │   ├── features/                                   # One folder per feature
-│   │   ├── auth/                                   # Login, sign-up, register, session
+│   │   ├── auth/                                   # Login and session
 │   │   │   ├── api/
 │   │   │   │   └── auth-requests.ts                # HTTP calls to the /auth routes
 │   │   │   ├── components/
-│   │   │   │   ├── auth-option-link.tsx
 │   │   │   │   ├── credentials-form.tsx
 │   │   │   │   └── password-input.tsx
 │   │   │   ├── hooks/
 │   │   │   │   └── use-credentials-form.ts
 │   │   │   └── services/
-│   │   │       ├── auth-credentials.ts             # Parses login, sign-up, and register input
+│   │   │       ├── auth-credentials.ts             # Parses login input
 │   │   │       ├── current-user.ts                 # Reads the current user for the workspace (GET /auth/me)
 │   │   │       ├── refresh-session.ts              # Renews a token near its end
 │   │   │       ├── session-cookie.ts               # Name and options of the pms-session cookie
@@ -566,9 +571,15 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   │       └── review-cycles-table.tsx
 │   │   └── review-templates/                       # KPI Goal Templates (wired to the API) and the behavioral template editor (not routed)
 │   │       ├── api/
+│   │       │   ├── behavioral-template-requests.ts
 │   │       │   └── goal-template-requests.ts       # Server-only HTTP calls to /kpi-goals
 │   │       ├── components/
+│   │       │   ├── behavioral-template-create-action.tsx
+│   │       │   ├── behavioral-template-create-form.tsx
+│   │       │   ├── behavioral-template-details-view.tsx
+│   │       │   ├── behavioral-template-edit-form.tsx
 │   │       │   ├── behavioral-template-editor.tsx  # Not routed to a page yet
+│   │       │   ├── behavioral-template-list.tsx
 │   │       │   ├── goal-template-create-action.tsx
 │   │       │   ├── goal-template-create-form.tsx
 │   │       │   ├── goal-template-details-view.tsx
@@ -580,13 +591,20 @@ web/                                                # @pms/web: Next.js app (exp
 │   │       │   ├── indicator-matrix-editor.tsx     # Matrix and threshold scale editor of one indicator
 │   │       │   └── kpi-goal-template-editor.tsx    # Builder, read-only details mode, draft edit, published edit
 │   │       └── services/
+│   │           ├── api-error-text.ts
+│   │           ├── behavioral-template-editor-state.ts
+│   │           ├── behavioral-template-reader.ts
+│   │           ├── behavioral-template-state.ts
 │   │           ├── create-goal-template.ts         # Server action: create a template
 │   │           ├── goal-template-editor-state.ts   # Maps a server template to editor state and builds the state key
 │   │           ├── goal-template-format.ts
 │   │           ├── goal-template-reader.ts         # Reads templates from the API for the list, details, and edit pages
 │   │           ├── goal-template-selection.ts      # List state in the URL: tab, status, search, page
 │   │           ├── indicator-matrix.ts
+│   │           ├── manage-behavioral-template.ts
 │   │           ├── manage-goal-template.ts         # Server actions: save draft, publish, update (new version)
+│   │           ├── publish-confirmation.ts         # The words of the dialog before a publish, for KPI and behavioral
+│   │           ├── save-behavioral-template.ts
 │   │           └── template-requests.ts            # Turns editor state into a request body
 │   ├── hooks/                                      # Hooks shared by two or more features
 │   │   ├── use-mobile.ts
@@ -620,10 +638,16 @@ web/                                                # @pms/web: Next.js app (exp
 ├── tests/
 │   ├── component/                                  # Rendered components
 │   │   ├── .gitkeep
+│   │   ├── behavioral-template-create-form.test.tsx
+│   │   ├── behavioral-template-details-view.test.tsx
+│   │   ├── behavioral-template-edit-form.test.tsx
+│   │   ├── behavioral-template-editor-leave.test.tsx
+│   │   ├── behavioral-template-list.test.tsx
 │   │   ├── credentials-form.test.tsx
 │   │   ├── goal-template-create-form.test.tsx
 │   │   ├── goal-template-edit-modes.test.tsx
 │   │   ├── goal-template-listing.test.tsx
+│   │   ├── goal-template-publish-confirmation.test.tsx
 │   │   ├── goal-template-saved-notice.test.tsx
 │   │   ├── indicator-matrix-editor.test.tsx
 │   │   └── workspace-account-menu.test.tsx
@@ -631,15 +655,23 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   └── .gitkeep
 │   ├── integration/                                # Server actions and services
 │   │   ├── .gitkeep
+│   │   ├── behavioral-template-reader.test.ts
 │   │   ├── create-goal-template.test.ts
 │   │   ├── goal-template-reader.test.ts
+│   │   ├── manage-behavioral-template.test.ts
 │   │   ├── manage-goal-template.test.ts
 │   │   ├── refresh-session.test.ts
+│   │   ├── save-behavioral-template.test.ts
 │   │   ├── submit-credentials.test.ts
 │   │   └── workspace-session.test.ts
 │   ├── unit/                                       # Pure functions and rules
 │   │   ├── .gitkeep
+│   │   ├── api-error-text.test.ts
+│   │   ├── behavioral-template-editor-state.test.ts
+│   │   ├── behavioral-template-requests.test.ts
+│   │   ├── behavioral-template-state.test.ts
 │   │   ├── goal-template-editor-state.test.ts
+│   │   ├── goal-template-format.test.ts
 │   │   ├── goal-template-selection.test.ts
 │   │   ├── indicator-matrix.test.ts
 │   │   ├── number-input-styles.test.ts
@@ -701,11 +733,15 @@ The menu is a convenience. It does not authorize anything: the API checks the to
 
 ### 3.5 `packages/`
 
-137 tracked files.
+145 tracked files.
 
 ```text
 packages/                        # Internal packages (expanded in 3.5)
 ├── database/                    # @pms/database: PostgreSQL schema, seed, and init script
+│   ├── migrations/              # One-time scripts for existing databases
+│   │   ├── 2026-11-24-auth-tables-to-pms.sql
+│   │   ├── 2026-11-24-behavioral-template-details.sql
+│   │   └── 2026-11-24-kpi-company-position-text.sql
 │   ├── reference/               # Identity design notes and reference SQL
 │   │   ├── identity.md
 │   │   └── identity.sql
@@ -716,7 +752,6 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   ├── employees.sql
 │   │   ├── evaluation-results.sql
 │   │   ├── evaluator-assignments.sql
-│   │   ├── identity-and-directory.sql
 │   │   ├── kpi-accomplishments.sql
 │   │   ├── kpi-goals.sql
 │   │   ├── manager-assignments.sql
@@ -729,15 +764,16 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   ├── 202-files.sql
 │   │   ├── audit.sql
 │   │   ├── behavioral-assessments.sql
+│   │   ├── employees.sql
 │   │   ├── evaluator-assignments.sql
-│   │   ├── identity-and-directory.sql
 │   │   ├── kpi-accomplishments.sql
 │   │   ├── kpi-goals.sql
 │   │   ├── manager-assignments.sql
 │   │   ├── notifications.sql
 │   │   ├── operational-goals.sql
 │   │   ├── pip.sql
-│   │   └── review-cycles.sql
+│   │   ├── review-cycles.sql
+│   │   └── users.sql
 │   ├── init-db.mjs              # Creates the database, applies schema.sql, then seed.sql
 │   ├── package.json             # db:init and test scripts
 │   ├── README.md
@@ -752,10 +788,15 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   ├── domain/              # One Zod enum per file, values match the database
 │   │   │   ├── accomplishment-status.enum.ts
 │   │   │   ├── behavioral-question-type.enum.ts
+│   │   │   ├── behavioral-review-type.enum.ts
+│   │   │   ├── behavioral-template-category.enum.ts
+│   │   │   ├── blood-type.enum.ts
 │   │   │   ├── cycle-status.enum.ts
 │   │   │   ├── employee-status.enum.ts
+│   │   │   ├── employment-status.enum.ts
 │   │   │   ├── evaluation-status.enum.ts
 │   │   │   ├── evaluator-type.enum.ts
+│   │   │   ├── gender.enum.ts
 │   │   │   ├── goal-category.enum.ts
 │   │   │   ├── goal-milestone-status.enum.ts
 │   │   │   ├── goal-status.enum.ts
@@ -763,6 +804,7 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   │   ├── index.ts
 │   │   │   ├── kpi-direction.enum.ts
 │   │   │   ├── manager-assignment-status.enum.ts
+│   │   │   ├── marital-status.enum.ts
 │   │   │   ├── matrix-kind.enum.ts
 │   │   │   ├── notification-source-type.enum.ts
 │   │   │   ├── nte-status.enum.ts
@@ -802,11 +844,9 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   │   ├── behavioral-sections.row.ts
 │   │   │   ├── behavioral-template-versions.row.ts
 │   │   │   ├── behavioral-templates.row.ts
-│   │   │   ├── companies.row.ts
 │   │   │   ├── cycle-participants.row.ts
 │   │   │   ├── cycle-stages.row.ts
 │   │   │   ├── cycles.row.ts
-│   │   │   ├── departments.row.ts
 │   │   │   ├── employees.row.ts
 │   │   │   ├── evaluation-snapshots.row.ts
 │   │   │   ├── goal-milestones.row.ts
@@ -831,8 +871,8 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   │   ├── pip-week-assessments.row.ts
 │   │   │   ├── pip-week-updates.row.ts
 │   │   │   ├── pip-weeks.row.ts
-│   │   │   ├── positions.row.ts
-│   │   │   └── user-role.row.ts
+│   │   │   ├── user-role.row.ts
+│   │   │   └── users.row.ts
 │   │   ├── rules/               # Rules shared by the API, the save schema, and the editor
 │   │   │   ├── kpi-matrix.ts    # Matrix limits, default scale, score checks
 │   │   │   ├── kpi-target.ts    # Percentage target cap
@@ -841,6 +881,7 @@ packages/                        # Internal packages (expanded in 3.5)
 │   │   └── index.ts             # The only entry point of the package
 │   ├── test/                    # node:test files
 │   │   ├── auth.test.mjs
+│   │   ├── behavioral-template.test.mjs
 │   │   ├── db-enums.test.mjs
 │   │   ├── errors.test.mjs
 │   │   ├── goal-template-request.test.mjs
@@ -865,11 +906,10 @@ packages/                        # Internal packages (expanded in 3.5)
 | `database/schema/`         | Table definitions by module, included in order by `schema.sql`                                                 |
 | `database/seeds/`          | Development fixtures by module, included in order by `seed.sql`                                                |
 
-`schema.sql` creates schema `pms` and includes these modules in this order: `identity-and-directory`, `employees`, `manager-assignments`, `kpi-goals`, `behavioral-assessments`, `review-cycles`, `kpi-accomplishments`, `evaluator-assignments`, `evaluation-results`, `202-files`, `pip`, `operational-goals`, `notifications`, `audit`, `users`.
+`schema.sql` creates schema `pms` and includes these modules in this order: `employees`, `manager-assignments`, `kpi-goals`, `behavioral-assessments`, `review-cycles`, `kpi-accomplishments`, `evaluator-assignments`, `evaluation-results`, `202-files`, `pip`, `operational-goals`, `notifications`, `audit`, `users`.
 
 | SQL module               | Tables                                                                                                                                                                                                         |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `identity-and-directory` | `pms.companies`, `pms.departments`, `pms.positions`, `pms.user_role`                                                                                                                                           |
 | `employees`              | `pms.employees`                                                                                                                                                                                                |
 | `manager-assignments`    | `pms.manager_assignments`                                                                                                                                                                                      |
 | `kpi-goals`              | `pms.kpi_goal_templates`, `pms.kpi_template_versions`, `pms.kpi_indicators`, `pms.kpi_indicator_scales`, `pms.kpi_indicator_matrix_rows`, `pms.kpi_indicator_matrix_columns`, `pms.kpi_indicator_matrix_cells` |
@@ -883,7 +923,7 @@ packages/                        # Internal packages (expanded in 3.5)
 | `operational-goals`      | `pms.operational_goals`, `pms.goal_milestones`, `pms.goal_progress_updates`                                                                                                                                    |
 | `notifications`          | `pms.notifications`, `pms.notification_preferences`                                                                                                                                                            |
 | `audit`                  | `pms.audit_events`                                                                                                                                                                                             |
-| `users`                  | `public.users`                                                                                                                                                                                                 |
+| `users`                  | `pms.user_role`, `pms.users`                                                                                                                                                                                   |
 
 ### Module Boundary Rules
 
@@ -941,7 +981,7 @@ sequenceDiagram
   participant Form as Login form (client)
   participant Action as submitCredentials (server action)
   participant Api as POST /auth/login
-  participant Db as PostgreSQL (public.users)
+  participant Db as PostgreSQL (pms.users)
   participant Cookie as pms-session cookie
 
   User->>Form: identifier and password
@@ -957,7 +997,7 @@ sequenceDiagram
   Form->>User: router.replace to / (client navigation)
 ```
 
-The server action only sets the cookie and returns a result. The login form hook (`use-credentials-form.ts`) navigates after a successful login. Only the register action calls `redirect("/login")` on the server.
+The server action only sets the cookie and returns a result. The login form hook (`use-credentials-form.ts`) navigates after a successful login.
 
 Login accepts an email or a username. After 5 failed attempts the account locks for 15 minutes. An unknown account runs the same bcrypt comparison against a fixed dummy hash, so the response time does not reveal whether the account exists.
 
@@ -1009,7 +1049,7 @@ sequenceDiagram
   Action->>Api: POST :id/update, then :id/published, or POST :id/versions
   Api->>Api: JwtAuthGuard, AdminRoleGuard, ValidationPipe
   Api->>Resolver: company and actor GUID of the account
-  Resolver->>Db: pms.employees by hrdotnet_id, then by code
+  Resolver->>Db: pms.users, then pms.employees by users.employee_id (company text)
   Api->>Service: command
   Service->>Service: rules (weights total 100, percentage cap, locked unit and direction)
   Service->>Db: transaction
@@ -1097,8 +1137,8 @@ Publish needs at least one indicator and weights that total 100 (tolerance 0.01)
 - One error envelope. No module writes an error body by hand. The filter is the only writer.
 - Shared contracts are defined once. Row schemas are generated from `schema.sql`, and CI runs `generate:check`.
 - Dependency boundaries are lint rules, not conventions (section 3, rule 2).
-- HRDotNet access is read only by convention. The `secondaryDB` connection sets `synchronize: false`, which stops TypeORM from changing that schema but does not block writes. No source file writes through `secondaryDB`: `AccountRegistrationService` reads the HRDotNet repositories and saves only through the main connection. Whether the SQL Server login itself is limited to read access is not verified here.
-- Never create a TypeORM entity for `pms.employees` or `pms.positions`. With `synchronize: true`, a partial entity makes TypeORM drop the other columns. Read these tables with raw SQL, as `CompanyResolver` does.
+- The backend has one database connection. The HRDotNet SQL Server connection (`secondaryDB`), its entity, and the `mssql` dependency were removed in PR #8, so no code reads the HRDotNet database.
+- Every TypeORM entity maps to schema `pms`, and `backend/src/entity-schema.spec.ts` fails when one does not. `synchronize` is false, so an entity never creates or alters a table.
 - Multi-step PostgreSQL writes run in a transaction.
 - Domain codes become words in one place, `web/src/constants/domain-labels.ts`.
 - The application tier keeps no session state in memory. The session is the signed token in the cookie.
@@ -1108,27 +1148,27 @@ Publish needs at least one indicator and weights that total 100 (tolerance 0.01)
 
 Gaps marked "(handoff)" come from `docs/handoffs/2026-11-19-kpi-goal-templates.md` and were not re-verified when this file was written. The other gaps were read in the code.
 
-| Gap                               | Detail                                                                                                                                                                                                                                                                                                                                                          | State                                           |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Company scoping (handoff)         | List, details, and write routes of `kpi-goals` do not filter by company. Every admin sees every template (CWE-639). `CompanyResolver` resolves the company for the writes but the routes do not enforce it                                                                                                                                                      | Needs the backend owner's decision              |
-| Schema drift                      | The backend runs `synchronize: true` and defines entities for tables that `schema.sql` also defines. `behavioral_questions`, `users`, and `user_role` entities declare no schema, so TypeORM maps them to `public`, while `schema.sql` defines `pms.behavioral_questions` and `pms.user_role`. Whether the live database holds both copies is not verified here | Open, recorded in `docs/workspace-blueprint.md` |
-| No migrations                     | Type changes of a column are drop and add, which loses data. ALTER scripts are run by hand from `.codex/scripts` (local, not tracked)                                                                                                                                                                                                                           | Open                                            |
-| Guard coverage                    | `BehavioralAssessmentController` has `JwtAuthGuard` only. `GET /employees` has `JwtAuthGuard` only                                                                                                                                                                                                                                                              | Confirm intended access with the owner          |
-| One generic notice (handoff)      | The KPI pages show one "HR access required" notice for both a role refusal and "No company is linked to your account"                                                                                                                                                                                                                                           | Not changed                                     |
-| Indicator identity (handoff)      | `createVersion` writes fresh indicator ids. The unit and direction lock matches by the ids the client sends                                                                                                                                                                                                                                                     | Open                                            |
-| DTO and schema mismatch (handoff) | `IndicatorDto.unit` is optional in the backend DTO and required in the shared schema                                                                                                                                                                                                                                                                            | Open                                            |
-| Duplicate names (handoff)         | No duplicate template name check                                                                                                                                                                                                                                                                                                                                | Open                                            |
-| Description is not versioned      | `description` (and `name`) live on `kpi_goal_templates`, not on the version row. Editing a published template changes them for every version                                                                                                                                                                                                                    | Confirm intent with the owner                   |
-| Placeholder observability keys    | `ObserveModule.forRoot` receives literal placeholder strings in tracked code                                                                                                                                                                                                                                                                                    | Open                                            |
-| Unused dependencies               | `@nestjs/terminus` and `nodemailer` are declared and no source file imports them. Both `bcrypt` and `bcryptjs` are declared and `AuthService` uses `bcryptjs`                                                                                                                                                                                                   | Open                                            |
-| CI test scope                     | `ci.yml` leaves out the `backend` and `database` tests and records the reason in a comment. The 2026-11-19 handoff reports the backend tests passing locally, so the comment is possibly stale                                                                                                                                                                  | Re-check, then add them to CI                   |
+| Gap                               | Detail                                                                                                                                                                                                                                                                                                   | State                                                                 |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Company scoping (handoff)         | List, details, and write routes of `kpi-goals` do not filter by company. Every admin sees every template (CWE-639). `CompanyResolver` resolves the company for the writes but the routes do not enforce it                                                                                               | Needs the backend owner's decision                                    |
+| Schema drift                      | The SQL files own the tables and every entity maps to `pms`. A database made before PR #8 has the old table shapes, and `schema.sql` does not alter existing tables. Eight schema files still reference `pms.companies` and `pms.positions`, which `schema.sql` no longer creates, so a fresh load fails | Open, recorded in `docs/reviews/2026-11-24-auth-pms-schema-review.md` |
+| No migrations                     | Schema changes reach an existing database through scripts run by hand from `.codex/scripts` (local, not tracked). `schema.sql` never alters a table                                                                                                                                                      | Open                                                                  |
+| Guard coverage                    | `GET /employees` has `JwtAuthGuard` only (the behavioral controller got `AdminRoleGuard` on 2026-11-24)                                                                                                                                                                                                  | Confirm intended access with the owner                                |
+| One generic notice (handoff)      | The KPI pages show one "HR access required" notice for both a role refusal and "No company is linked to your account"                                                                                                                                                                                    | Not changed                                                           |
+| Indicator identity (handoff)      | `createVersion` writes fresh indicator ids. The unit and direction lock matches by the ids the client sends                                                                                                                                                                                              | Open                                                                  |
+| DTO and schema mismatch (handoff) | `IndicatorDto.unit` is optional in the backend DTO and required in the shared schema                                                                                                                                                                                                                     | Open                                                                  |
+| Duplicate names (handoff)         | No duplicate template name check                                                                                                                                                                                                                                                                         | Open                                                                  |
+| Description is not versioned      | `description` (and `name`) live on `kpi_goal_templates`, not on the version row. Editing a published template changes them for every version                                                                                                                                                             | Confirm intent with the owner                                         |
+| Placeholder observability keys    | `ObserveModule.forRoot` receives literal placeholder strings in tracked code                                                                                                                                                                                                                             | Open                                                                  |
+| Unused dependencies               | `@nestjs/terminus` and `nodemailer` are declared and no source file imports them. Both `bcrypt` and `bcryptjs` are declared and `AuthService` uses `bcryptjs`                                                                                                                                            | Open                                                                  |
+| CI test scope                     | `ci.yml` leaves out the `backend` and `database` tests and records the reason in a comment. The 2026-11-19 handoff reports the backend tests passing locally, so the comment is possibly stale                                                                                                           | Re-check, then add them to CI                                         |
 
 ### 5.3 Anti-patterns to reject in review
 
 - A page or component that calls the API from the browser, or reads the session token in client code.
 - A new error body written inside a controller or service instead of throwing an HTTP exception.
 - A feature module importing another module's internals instead of its exported service (and a new guard shared by two modules left inside one of them).
-- A TypeORM entity added for `pms.employees` or `pms.positions`.
+- A TypeORM entity without `schema: "pms"`.
 - A hand-edited file in `packages/shared-types/src/rows/`.
 - An enum value invented in one app. Add it to `packages/shared-types/src/domain/` first, matching the database code.
 - A new shared rule written twice (once in the API, once in the editor) instead of once in `packages/shared-types/src/rules/`.

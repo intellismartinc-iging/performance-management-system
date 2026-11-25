@@ -40,7 +40,7 @@ const OK = { status: 200, data: {} };
 const BODY = {
   name: "Goals",
   description: "",
-  positionId: 12,
+  position: "Software Engineer",
   indicators: [
     {
       name: "Delivery rate",

@@ -6,7 +6,7 @@
 -- Stores the review calendar, weights, and lifecycle state.
 CREATE TABLE IF NOT EXISTS pms.cycles (
     cycle_id             uuid PRIMARY KEY,
-    company_id           bigint NOT NULL REFERENCES pms.companies(company_id),
+    company              text NOT NULL,
     name                 text NOT NULL,
     review_type          text NOT NULL CHECK (review_type IN ('standard','360','probationary','project_based')),
     state                text NOT NULL CHECK (state IN ('draft','scheduled','active','completed','cancelled')),
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS pms.cycle_participants (
     participant_id        uuid PRIMARY KEY,
     cycle_id              uuid NOT NULL REFERENCES pms.cycles(cycle_id),
     employee_id           uuid NOT NULL REFERENCES pms.employees(guid),
-    frozen_position_id    bigint REFERENCES pms.positions(position_id),   -- snapshot at scheduling (Cyc-004)
+    frozen_position       text,   -- snapshot at scheduling (Cyc-004)
     kpi_version_id        uuid REFERENCES pms.kpi_template_versions(version_id),          -- frozen
     behavioral_version_id uuid REFERENCES pms.behavioral_template_versions(version_id),   -- frozen
     created_at            timestamptz NOT NULL DEFAULT now(),

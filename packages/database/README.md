@@ -11,16 +11,16 @@ The module SQL follows the workflow model in [Database Design](../../docs/databa
 
 ## Workflow ownership
 
-| PRD workflow                                  | SQL module                                                               | What it owns                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| KPI and behavioral templates (4–5)            | `kpi-goals.sql`, `behavioral-assessments.sql`                            | Template versions and the configuration that reviews freeze   |
-| Review cycle (6)                              | `review-cycles.sql`                                                      | Schedule, component weights, participants, and stages         |
-| KPI accomplishments (7)                       | `kpi-accomplishments.sql`                                                | One current actual per indicator and the correction history   |
-| Evaluator work (8)                            | `evaluator-assignments.sql`                                              | Assignments, stage references, and response versions          |
-| Results (9)                                   | `evaluation-results.sql`                                                 | Frozen evidence, scores, finalization, and release            |
-| Directory and manager changes (10, 14)        | `identity-and-directory.sql`, `employees.sql`, `manager-assignments.sql` | Directory records and effective-dated reporting changes       |
-| 202 Files and PIP (11–12)                     | `202-files.sql`, `pip.sql`                                               | Notices, receipts, plans, weekly work, and assessment history |
-| Notifications, goals, and audit (2.7, 13, 15) | `notifications.sql`, `operational-goals.sql`, `audit.sql`                | Messages, milestones, progress history, and audit evidence    |
+| PRD workflow                                  | SQL module                                                | What it owns                                                  |
+| --------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------- |
+| KPI and behavioral templates (4–5)            | `kpi-goals.sql`, `behavioral-assessments.sql`             | Template versions and the configuration that reviews freeze   |
+| Review cycle (6)                              | `review-cycles.sql`                                       | Schedule, component weights, participants, and stages         |
+| KPI accomplishments (7)                       | `kpi-accomplishments.sql`                                 | One current actual per indicator and the correction history   |
+| Evaluator work (8)                            | `evaluator-assignments.sql`                               | Assignments, stage references, and response versions          |
+| Results (9)                                   | `evaluation-results.sql`                                  | Frozen evidence, scores, finalization, and release            |
+| Directory and manager changes (10, 14)        | `employees.sql`, `users.sql`, `manager-assignments.sql`   | Directory records and effective-dated reporting changes       |
+| 202 Files and PIP (11–12)                     | `202-files.sql`, `pip.sql`                                | Notices, receipts, plans, weekly work, and assessment history |
+| Notifications, goals, and audit (2.7, 13, 15) | `notifications.sql`, `operational-goals.sql`, `audit.sql` | Messages, milestones, progress history, and audit evidence    |
 
 API requests follow the shared contracts. Services enforce role and company scope, stage readiness, schedule eligibility, and cross-record workflow rules. SQL enforces keys and row-level invariants. For example, result release needs a finalization timestamp and the cycle component weights must total 100 percent.
 

@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 
 /** Pages for people who are not logged in. A logged-in user is sent away from them. */
-const AUTH_PAGES = ["/login", "/sign-up", "/register"] as const;
+const AUTH_PAGES = ["/login"] as const;
 
 const LOGIN_PATH = "/login";
 const HOME_PATH = "/";

@@ -20,4 +20,4 @@ The root instructions apply to this workspace.
 
 - Enforce authorization at the API boundary. Apply `auth-architecture` to auth and session changes when available.
 - Use transactions for multi-step PostgreSQL writes, parameterize queries, and avoid N+1 access.
-- Follow the root security review workflow when completing a module. Coordinate backend changes with its owner before merge.
+- Follow the root security review workflow when completing a module. Coordinate backend changes with the module owner before merge.

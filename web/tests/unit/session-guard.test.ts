@@ -37,10 +37,14 @@ describe("readTokenExpiry", () => {
 });
 
 describe("isAuthPage", () => {
-  it("matches the auth pages and their children", () => {
+  it("matches the login page and its children", () => {
     expect(isAuthPage("/login")).toBe(true);
-    expect(isAuthPage("/sign-up")).toBe(true);
-    expect(isAuthPage("/register")).toBe(true);
+    expect(isAuthPage("/login/")).toBe(true);
+  });
+
+  it("does not match the removed sign-up and register pages", () => {
+    expect(isAuthPage("/sign-up")).toBe(false);
+    expect(isAuthPage("/register")).toBe(false);
   });
 
   it("does not match other pages", () => {

@@ -5,14 +5,14 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.cycles (
-    cycle_id, company_id, name, review_type, state,
+    cycle_id, company, name, review_type, state,
     evaluation_start, evaluation_end, assessment_start, verification_deadline,
     activation_date, goals_weight, behavioral_weight, anonymity_threshold,
     idempotency_key, created_at, updated_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000141',
-   1,
+   'Mayon Consolidated Inc.',
    'CY2026-Q4', 'standard', 'active',
    '2026-11-04', '2026-12-31', now(), now() + interval '14 days',
    '2026-11-04', 0.50, 0.50, 5,
@@ -20,14 +20,14 @@ VALUES
 ON CONFLICT (cycle_id) DO NOTHING;
 
 INSERT INTO pms.cycle_participants (
-    participant_id, cycle_id, employee_id, frozen_position_id,
+    participant_id, cycle_id, employee_id, frozen_position,
     kpi_version_id, behavioral_version_id, created_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000151',
    '00000000-0000-0000-0000-000000000141',
-   '00000000-0000-0000-0000-000000000021',
-   11,
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
+   'Software Engineer',
    '00000000-0000-0000-0000-000000000051',
    '00000000-0000-0000-0000-000000000111',
    now())

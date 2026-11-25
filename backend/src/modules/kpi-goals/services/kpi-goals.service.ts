@@ -106,25 +106,25 @@ function assertPublishedIndicatorsKeepUnitAndDirection(
   });
 }
 
-/** A bigint column is a string in the entity, and a number in the request. */
-function toBigintId(value: number | null | undefined): string | null {
-  return value === null || value === undefined ? null : String(value);
-}
-
-/** A position must belong to the template's company. A null position is company-wide. */
+/**
+ * A position must be one that an employee of the template's company holds. A null
+ * position is company-wide. The position a template already has stays valid: an
+ * edit must not fail because the last employee in that role left.
+ */
 async function assertPositionInCompany(
   manager: EntityManager,
-  positionId: number | null | undefined,
-  companyId: number,
+  position: string | null | undefined,
+  company: string,
+  current: string | null = null,
 ): Promise<void> {
-  if (positionId === null || positionId === undefined) return;
+  if (position === null || position === undefined || position === current) return;
 
   const rows: unknown[] = await manager.query(
-    'SELECT 1 FROM pms.positions WHERE position_id = $1 AND company_id = $2',
-    [positionId, companyId],
+    'SELECT 1 FROM pms.employees WHERE company = $1 AND position = $2 LIMIT 1',
+    [company, position],
   );
   if (rows.length === 0) {
-    throw new BadRequestException('The position does not belong to your company.');
+    throw new BadRequestException('No employee of your company holds that position.');
   }
 }
 
@@ -149,18 +149,16 @@ export class KpiGoalsService {
     private readonly companies: CompanyResolver,
   ) {}
 
-  /** The positions of the caller's company, for the template editor. */
+  /** The positions that employees of the caller's company hold, for the template editor. */
   async listPositions(userId: string) {
-    const companyId = await this.companies.resolveCompanyId(userId);
-    const rows: { position_id: string; title: string }[] =
-      await this.dataSource.manager.query(
-        'SELECT position_id, title FROM pms.positions WHERE company_id = $1 ORDER BY title',
-        [companyId],
-      );
-    return rows.map((row) => ({
-      positionId: Number(row.position_id),
-      title: row.title,
-    }));
+    const company = await this.companies.resolveCompany(userId);
+    const rows: { position: string }[] = await this.dataSource.manager.query(
+      `SELECT DISTINCT position FROM pms.employees
+        WHERE company = $1 AND position IS NOT NULL AND position <> ''
+        ORDER BY position`,
+      [company],
+    );
+    return rows.map((row) => row.position);
   }
 
   async create(
@@ -170,11 +168,11 @@ export class KpiGoalsService {
     assertIndicatorScores(dto.indicators);
     assertIndicatorMatrices(dto.indicators);
 
-    const { companyId, actorId } = await this.companies.resolveAccount(creatorId);
+    const { company, actorId } = await this.companies.resolveAccount(creatorId);
     await assertPositionInCompany(
       this.dataSource.manager,
-      dto.positionId,
-      companyId,
+      dto.position,
+      company,
     );
 
     const templateId = randomUUID();
@@ -184,8 +182,8 @@ export class KpiGoalsService {
       await manager.save(
         manager.create(KpiGoalTemplate, {
           templateId,
-          positionId: toBigintId(dto.positionId),
-          companyId: String(companyId),
+          position: dto.position ?? null,
+          company,
           name: dto.name,
           description: dto.description?.trim() || null,
           status: 'draft',
@@ -230,13 +228,14 @@ export class KpiGoalsService {
         templateId,
       );
 
-      if (dto.positionId !== undefined) {
+      if (dto.position !== undefined) {
         await assertPositionInCompany(
           manager,
-          dto.positionId,
-          Number(template.companyId),
+          dto.position,
+          template.company,
+          template.position,
         );
-        template.positionId = toBigintId(dto.positionId);
+        template.position = dto.position;
       }
       template.name = dto.name;
       template.description = dto.description?.trim() || null;
@@ -286,9 +285,9 @@ export class KpiGoalsService {
         : [];
       assertPublishedIndicatorsKeepUnitAndDirection(dto.indicators, previous);
 
-      if (dto.positionId !== undefined) {
-        await assertPositionInCompany(manager, dto.positionId, Number(template.companyId));
-        template.positionId = toBigintId(dto.positionId);
+      if (dto.position !== undefined) {
+        await assertPositionInCompany(manager, dto.position, template.company, template.position);
+        template.position = dto.position;
       }
       template.name = dto.name;
       template.description = dto.description?.trim() || null;
@@ -369,15 +368,14 @@ export class KpiGoalsService {
   }
 
   /**
-   * Every template with its position title and the indicator count of its latest
+   * Every template with the indicator count of its latest
    * version (the same version `findTree` shows), in one query.
    */
   async list() {
     const rows: Record<string, unknown>[] = await this.dataSource.manager.query(
-      `SELECT t.template_id, t.position_id, t.company_id, t.name, t.description,
+      `SELECT t.template_id, t.position, t.company, t.name, t.description,
               t.status, t.current_version,
               t.published_by, t.published_at, t.archived_at, t.created_at, t.updated_at,
-              p.title AS position_title,
               (SELECT count(*)
                  FROM pms.kpi_indicators i
                 WHERE i.version_id = (SELECT v.version_id
@@ -386,13 +384,12 @@ export class KpiGoalsService {
                                        ORDER BY v.version DESC
                                        LIMIT 1)) AS indicator_count
          FROM pms.kpi_goal_templates t
-         LEFT JOIN pms.positions p ON p.position_id = t.position_id
         ORDER BY t.updated_at DESC`,
     );
     return rows.map((row) => ({
       templateId: row.template_id,
-      positionId: row.position_id,
-      companyId: row.company_id,
+      position: row.position,
+      company: row.company,
       name: row.name,
       description: row.description,
       status: row.status,
@@ -402,7 +399,6 @@ export class KpiGoalsService {
       archivedAt: row.archived_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      positionTitle: row.position_title,
       indicatorCount: Number(row.indicator_count),
     }));
   }

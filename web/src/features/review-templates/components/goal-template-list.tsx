@@ -79,7 +79,7 @@ export function GoalTemplateList({
                 className="group/link inline-grid min-h-pms-touch content-center gap-0.5 rounded-pms-control"
               >
                 <span className="wrap-anywhere font-semibold text-primary group-hover/link:underline group-focus-visible/link:underline">
-                  {row.name ?? row.positionTitle ?? formatPosition(row.positionId)}
+                  {row.name ?? formatPosition(row.position)}
                 </span>
                 <span className="text-pms-label text-muted-foreground">
                   Version {row.currentVersion}
@@ -92,7 +92,7 @@ export function GoalTemplateList({
             heading: "Position",
             renderCell: (row) => (
               <span className="wrap-anywhere">
-                {row.positionTitle ?? formatPosition(row.positionId)}
+                {formatPosition(row.position)}
               </span>
             ),
           },

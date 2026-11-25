@@ -40,7 +40,7 @@ Enforced by lint, so a violation fails CI:
 generated files are out of date. The backend entities (TypeORM) follow the schema. They do
 not define it.
 
-Open item: the backend defines the same tables a second time. Its main PostgreSQL connection sets `synchronize: true` with TypeORM entities for `employees`, `users`, the KPI goal templates, and the behavioral assessment templates, so the app creates tables from the entities. `schema.sql` is a separate definition of those tables. The backend also reads the HRDotNet SQL Server database (`mssql`, read only). Until the entities follow `schema.sql`, or the decision here changes, the two can drift.
+The SQL files own the tables. The backend has one PostgreSQL connection with `synchronize: false` (since PR #8), so TypeORM never creates or alters a table, and every entity maps to schema `pms`. `backend/src/entity-schema.spec.ts` fails when an entity maps anywhere else. A database made before PR #8 needs its tables brought to the new shape by hand: `schema.sql` does not alter existing tables.
 
 ## Builds
 

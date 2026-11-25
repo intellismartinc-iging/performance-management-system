@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export const BEHAVIORAL_QUESTION_TYPES = [
@@ -17,6 +17,7 @@ export class ChoiceOptionDto {
   @IsString()
   @MinLength(1)
   @MaxLength(200)
+  @Matches(/\S/, { message: 'label must not be blank' })
   label: string;
 }
 

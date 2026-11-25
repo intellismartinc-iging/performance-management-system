@@ -9,6 +9,8 @@ export * from "./kpi-direction.enum.js";
 export * from "./matrix-kind.enum.js";
 export * from "./scale-bound.enum.js";
 export * from "./behavioral-question-type.enum.js";
+export * from "./behavioral-template-category.enum.js";
+export * from "./behavioral-review-type.enum.js";
 export * from "./review-type.enum.js";
 export * from "./cycle-status.enum.js";
 export * from "./evaluator-type.enum.js";

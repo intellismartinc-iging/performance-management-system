@@ -20,8 +20,8 @@ test("an id rejects a number, a numeric string, and text", () => {
 test("a template published by a fixture employee still parses", () => {
   const template = shared.kpiGoalTemplatesRowSchema.parse({
     templateId: "00000000-0000-0000-0000-000000000041",
-    positionId: 11,
-    companyId: 1,
+    position: "Software Engineer",
+    company: "Mayon Consolidated Inc.",
     name: "Software Engineer Performance Goals",
     description: null,
     status: "published",

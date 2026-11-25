@@ -29,7 +29,7 @@ const TEMPLATE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const BODY = {
   name: "Engineering Manager Performance Goals",
   description: "",
-  positionId: 12,
+  position: "Software Engineer",
   indicators: [
     {
       name: "Delivery rate",
@@ -55,8 +55,8 @@ const CREATED = {
   data: {
     template: {
       templateId: TEMPLATE_ID,
-      positionId: "12",
-      companyId: "1",
+      position: "Software Engineer",
+      company: "Mayon Consolidated Inc.",
       name: "Engineering Manager Performance Goals",
       description: null,
       status: "draft",

@@ -62,7 +62,7 @@ The connection sets `synchronize: false`. `packages/database/schema.sql` owns th
 
 ## Prerequisites
 
-Node.js 24, pnpm 12.14.0, and a PostgreSQL server with `packages/database/schema.sql` applied. The app throws at startup when `JWT_ACCESS_SECRET` is missing or blank.
+Node.js 24, pnpm 12.23.0, and a PostgreSQL server with `packages/database/schema.sql` applied. The app throws at startup when `JWT_ACCESS_SECRET` is missing or blank.
 
 ## Configuration
 

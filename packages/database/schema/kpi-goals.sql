@@ -6,8 +6,8 @@
 -- Stores the current KPI template state for a company and position.
 CREATE TABLE IF NOT EXISTS pms.kpi_goal_templates (
     template_id     uuid PRIMARY KEY,
-    position_id     bigint REFERENCES pms.positions(position_id),
-    company_id      bigint NOT NULL REFERENCES pms.companies(company_id),
+    position        text,
+    company         text NOT NULL,
     -- name: required for a new template, in the API. NULL for rows made before the column existed.
     name            text,
     description     text,

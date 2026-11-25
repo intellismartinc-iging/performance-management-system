@@ -81,7 +81,7 @@ Application invariants: no self-assignment, employee and manager must belong to 
 
 ### 5.1 `kpi_goal_templates`
 
-Template identity and lifecycle: `template_id` UUID PK, `position_id` FK, `company_id` FK, nullable `name` (required in the API for a new template) and `description`, `status` (`draft`, `published`, `archived`), `current_version`, `published_by`, `published_at`, `archived_at`, timestamps.
+Template identity and lifecycle: `template_id` UUID PK, `position` text, `company` text, nullable `name` (required in the API for a new template) and `description`, `status` (`draft`, `published`, `archived`), `current_version`, `published_by`, `published_at`, `archived_at`, timestamps.
 
 ### 5.2 `kpi_template_versions`
 
@@ -103,7 +103,7 @@ Published template versions and their scoring criteria must not be mutated after
 
 ## 6. Behavioral assessment templates
 
-- `behavioral_templates` and `behavioral_template_versions`: template identity/status and immutable version split, matching the KPI template pattern.
+- `behavioral_templates` and `behavioral_template_versions`: template identity/status and immutable version split, matching the KPI template pattern. A template has a `company` (text), a `name`, a `description`, a `category`, and a `review_type` (the last four are NULL on a row made before 2026-11-24).
 - `behavioral_sections`: `section_id` UUID PK, `version_id` FK, `title`, `sort_order`.
 - `behavioral_questions`: `question_id` UUID PK, `section_id` FK, `prompt`, `question_type` (`rating_scale`, `short_answer`, `paragraph`, `multiple_choice`), `is_required`, `allow_not_observed` (rating only), `sort_order`.
 - `behavioral_choice_options`: `option_id` UUID PK, `question_id` FK, distinct `label`.
@@ -114,13 +114,13 @@ Only observed numeric rating answers from 1–5 contribute to behavioral scoring
 
 ### 7.1 `cycles`
 
-`cycle_id` UUID PK; `company_id` FK; `name`; `review_type` (`standard`, `360`, `probationary`, `project_based`); `state` (`draft`, `scheduled`, `active`, `completed`, `cancelled`); `evaluation_start`, `evaluation_end` dates; `assessment_start`, `verification_deadline` timestamptz; `activation_date` date; `goals_weight`, `behavioral_weight` numeric; `anonymity_threshold` integer 2–10; `cancelled_reason`; `finalized_at`, `released_at`; `idempotency_key`; timestamps.
+`cycle_id` UUID PK; `company` text; `name`; `review_type` (`standard`, `360`, `probationary`, `project_based`); `state` (`draft`, `scheduled`, `active`, `completed`, `cancelled`); `evaluation_start`, `evaluation_end` dates; `assessment_start`, `verification_deadline` timestamptz; `activation_date` date; `goals_weight`, `behavioral_weight` numeric; `anonymity_threshold` integer 2–10; `cancelled_reason`; `finalized_at`, `released_at`; `idempotency_key`; timestamps.
 
 The bootstrap SQL enforces component weights between 0 and 1 and a combined total of 1 (100 percent).
 
 ### 7.2 `cycle_participants`
 
-`participant_id` UUID PK; `cycle_id` FK; `employee_id` FK; `frozen_position_id` FK; `kpi_version_id` FK; `behavioral_version_id` FK; `created_at`.
+`participant_id` UUID PK; `cycle_id` FK; `employee_id` FK; `frozen_position` text; `kpi_version_id` FK; `behavioral_version_id` FK; `created_at`.
 
 Unique key: `(cycle_id, employee_id)`.
 
@@ -289,7 +289,7 @@ erDiagram
 
 ### Public identity reference
 
-This diagram describes the identity reference draft. The package bootstrap creates standalone `public.users` and `pms.user_role` without identity foreign keys. See the workspace blueprint for the open TypeORM alignment decision.
+This diagram describes the old identity reference draft (`packages/database/reference/identity.sql`). The package no longer creates any `public` table: `pms.user_role` and `pms.users` come from `schema/users.sql`, and every backend entity maps to schema `pms`.
 
 ```mermaid
 erDiagram

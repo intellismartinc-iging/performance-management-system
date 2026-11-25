@@ -18,6 +18,7 @@ import { KpiTemplateVersion } from "../entities/kpi-template-version.entity.js";
 import type { CompanyResolver } from "./company-resolver.service.js";
 import { KpiGoalsService } from "./kpi-goals.service.js";
 
+const COMPANY = "Example Company";
 const TEMPLATE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const VERSION_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3302";
 // The employee GUID of the account. The user id of a login is a number, not a UUID.
@@ -38,7 +39,7 @@ function createDto(indicators: IndicatorDto[]): CreateKpiGoalTemplateDto {
   return {
     name: "Software Engineer Performance Goals",
     description: "Position targets",
-    positionId: 7,
+    position: "Software Engineer",
     indicators,
   };
 }
@@ -76,7 +77,7 @@ describe("KpiGoalsService writes", () => {
   );
   // Reads outside a transaction go through `dataSource.manager`.
   const readManager = { findOne: vi.fn(), query: vi.fn() };
-  const resolver = { resolveCompanyId: vi.fn(), resolveAccount: vi.fn() };
+  const resolver = { resolveCompany: vi.fn(), resolveAccount: vi.fn() };
   let service: KpiGoalsService;
 
   function asRepo(repo: ReturnType<typeof repository>) {
@@ -91,8 +92,8 @@ describe("KpiGoalsService writes", () => {
     transaction.mockClear();
     readManager.query.mockReset().mockResolvedValue([{ ok: 1 }]);
     manager.query.mockResolvedValue([{ ok: 1 }]);
-    resolver.resolveCompanyId.mockReset().mockResolvedValue(3);
-    resolver.resolveAccount.mockReset().mockResolvedValue({ companyId: 3, actorId: ACTOR_ID });
+    resolver.resolveCompany.mockReset().mockResolvedValue(COMPANY);
+    resolver.resolveAccount.mockReset().mockResolvedValue({ company: COMPANY, actorId: ACTOR_ID });
     readManager.findOne.mockReset();
     readManager.findOne.mockResolvedValue({ templateId: TEMPLATE_ID });
     repos.versions.findOne.mockResolvedValue(null);
@@ -150,15 +151,15 @@ describe("KpiGoalsService writes", () => {
     expectNoRepositoryWrites();
   });
 
-  it("stores bigint ids as strings and a missing position as null", async () => {
+  it("stores the company text of the account and a missing position as null", async () => {
     await service.create(createDto([indicator()]), "user-1");
-    await service.create({ ...createDto([indicator()]), positionId: null }, "user-1");
+    await service.create({ ...createDto([indicator()]), position: null }, "user-1");
 
     const templates = manager.create.mock.calls
       .filter(([entity]) => entity === KpiGoalTemplate)
       .map(([, value]) => value);
-    expect(templates[0]).toMatchObject({ companyId: "3", positionId: "7" });
-    expect(templates[1]).toMatchObject({ companyId: "3", positionId: null });
+    expect(templates[0]).toMatchObject({ company: COMPANY, position: "Software Engineer" });
+    expect(templates[1]).toMatchObject({ company: COMPANY, position: null });
   });
 
   it("stores the name and the description, and null for a blank description", async () => {
@@ -186,7 +187,7 @@ describe("KpiGoalsService writes", () => {
   });
 
   it("stores no creator when the employee row has no GUID, and still saves", async () => {
-    resolver.resolveAccount.mockResolvedValue({ companyId: 3, actorId: null });
+    resolver.resolveAccount.mockResolvedValue({ company: COMPANY, actorId: null });
 
     await service.create(createDto([indicator()]), "4");
 
@@ -209,7 +210,7 @@ describe("KpiGoalsService writes", () => {
     });
 
     await expect(
-      service.update(TEMPLATE_ID, { name: "Renamed", positionId: 7, indicators: [indicator()] }),
+      service.update(TEMPLATE_ID, { name: "Renamed", position: "Software Engineer", indicators: [indicator()] }),
     ).rejects.toThrow(ConflictException);
 
     expect(manager.save).not.toHaveBeenCalled();
@@ -223,7 +224,7 @@ describe("KpiGoalsService writes", () => {
       .mockResolvedValueOnce({ versionId: VERSION_ID });
     manager.find.mockResolvedValueOnce([{ indicatorId: "old" }] as never);
 
-    await service.update(TEMPLATE_ID, { name: "Renamed", description: "", positionId: 7, indicators: [indicator()] });
+    await service.update(TEMPLATE_ID, { name: "Renamed", description: "", position: "Software Engineer", indicators: [indicator()] });
 
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(manager.delete).toHaveBeenCalled();
@@ -281,7 +282,7 @@ describe("KpiGoalsService writes", () => {
     expect(resolver.resolveAccount).toHaveBeenCalledWith("user-1");
   });
 
-  it("refuses a position from another company before any write", async () => {
+  it("refuses a position that no employee of the company holds, before any write", async () => {
     readManager.query.mockResolvedValue([]);
 
     await expect(service.create(createDto([indicator()]), "user-1")).rejects.toThrow(
@@ -293,31 +294,43 @@ describe("KpiGoalsService writes", () => {
   });
 
   it("skips the position check for a company-wide template", async () => {
-    await service.create({ ...createDto([indicator()]), positionId: null }, "user-1");
+    await service.create({ ...createDto([indicator()]), position: null }, "user-1");
 
     expect(readManager.query).not.toHaveBeenCalled();
   });
 
-  it("refuses to move a draft to a position of another company", async () => {
+  it("keeps a draft's unchanged position even when no employee holds it any more", async () => {
     manager.findOne
-      .mockResolvedValueOnce({ templateId: TEMPLATE_ID, status: "draft", companyId: "3" })
+      .mockResolvedValueOnce({ templateId: TEMPLATE_ID, status: "draft", company: COMPANY, position: "Retired Role" })
+      .mockResolvedValueOnce({ versionId: VERSION_ID });
+    manager.query.mockResolvedValueOnce([]);
+
+    await service.update(TEMPLATE_ID, { name: "Renamed", position: "Retired Role", indicators: [indicator()] });
+
+    expect(manager.query).not.toHaveBeenCalledWith(expect.stringContaining("pms.employees"), expect.anything());
+    expect(manager.save).toHaveBeenCalled();
+  });
+
+  it("refuses to move a draft to a position that no employee of the company holds", async () => {
+    manager.findOne
+      .mockResolvedValueOnce({ templateId: TEMPLATE_ID, status: "draft", company: COMPANY, position: "Software Engineer" })
       .mockResolvedValueOnce({ versionId: VERSION_ID });
     manager.query.mockResolvedValueOnce([]);
 
     await expect(
-      service.update(TEMPLATE_ID, { name: "Renamed", positionId: 99, indicators: [indicator()] }),
+      service.update(TEMPLATE_ID, { name: "Renamed", position: "Unknown", indicators: [indicator()] }),
     ).rejects.toThrow(BadRequestException);
 
     expect(manager.save).not.toHaveBeenCalled();
     expect(manager.delete).not.toHaveBeenCalled();
   });
 
-  it("lists templates with the position title and the indicator count", async () => {
+  it("lists templates with their position text and the indicator count, with no join to a positions table", async () => {
     readManager.query.mockResolvedValue([
       {
         template_id: TEMPLATE_ID,
-        position_id: "11",
-        company_id: "1",
+        position: "Software Engineer",
+        company: COMPANY,
         status: "published",
         current_version: 2,
         published_by: null,
@@ -325,7 +338,6 @@ describe("KpiGoalsService writes", () => {
         archived_at: null,
         created_at: "2026-11-01T00:00:00.000Z",
         updated_at: "2026-11-05T00:00:00.000Z",
-        position_title: "Software Engineer",
         name: "Software Engineer Performance Goals",
         description: null,
         indicator_count: "3",
@@ -336,25 +348,23 @@ describe("KpiGoalsService writes", () => {
 
     expect(item).toMatchObject({
       templateId: TEMPLATE_ID,
-      positionId: "11",
-      companyId: "1",
+      position: "Software Engineer",
+      company: COMPANY,
       status: "published",
       currentVersion: 2,
-      positionTitle: "Software Engineer",
       name: "Software Engineer Performance Goals",
       description: null,
       indicatorCount: 3,
     });
     expect(readManager.query).toHaveBeenCalledTimes(1);
+    expect(readManager.query.mock.calls[0]?.[0]).not.toContain("pms.positions");
   });
 
   it("lists the positions of the account's company", async () => {
-    readManager.query.mockResolvedValue([{ position_id: "11", title: "Software Engineer" }]);
+    readManager.query.mockResolvedValue([{ position: "Software Engineer" }]);
 
-    await expect(service.listPositions("user-1")).resolves.toEqual([
-      { positionId: 11, title: "Software Engineer" },
-    ]);
-    expect(readManager.query).toHaveBeenCalledWith(expect.any(String), [3]);
+    await expect(service.listPositions("user-1")).resolves.toEqual(["Software Engineer"]);
+    expect(readManager.query).toHaveBeenCalledWith(expect.stringContaining("pms.employees"), [COMPANY]);
   });
 
   describe("a new version of a published template", () => {
@@ -363,7 +373,7 @@ describe("KpiGoalsService writes", () => {
       templateId: TEMPLATE_ID,
       status: "published",
       currentVersion: 2,
-      companyId: "3",
+      company: COMPANY,
     });
     const previous = [
       { indicatorId: OLD_INDICATOR_ID, unit: "Percentage", direction: "higher_is_better" },
@@ -371,7 +381,7 @@ describe("KpiGoalsService writes", () => {
     const body = (overrides: Partial<IndicatorDto> = {}) => ({
       name: "Renamed",
       description: "",
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [
         indicator({
           indicatorId: OLD_INDICATOR_ID,
@@ -472,7 +482,7 @@ describe("KpiGoalsService writes", () => {
       expect(transaction).not.toHaveBeenCalled();
     });
 
-    it("refuses a position of another company", async () => {
+    it("refuses a position that no employee of the company holds", async () => {
       arrange();
       manager.query.mockResolvedValueOnce([]);
 

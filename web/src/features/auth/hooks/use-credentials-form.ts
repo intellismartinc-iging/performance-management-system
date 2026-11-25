@@ -2,7 +2,7 @@
 
 import type { FocusEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { RegisterOptions } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
@@ -10,15 +10,11 @@ import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "@/features/auth/services/auth-credentials";
-import type { AuthMode } from "@/features/auth/services/auth-credentials";
 import { submitCredentials } from "@/features/auth/services/submit-credentials";
 
 interface CredentialsFields {
   identifier: string;
-  employeeCode: string;
-  username: string;
   password: string;
-  confirmPassword: string;
 }
 
 const REQUIRED_TEXT = (message: string) => ({
@@ -26,11 +22,8 @@ const REQUIRED_TEXT = (message: string) => ({
   validate: (value: string) => value.trim() !== "" || message,
 });
 
-export function useCredentialsForm(mode: AuthMode) {
+export function useCredentialsForm() {
   const router = useRouter();
-  const isLogin = mode === "login";
-  const isSignUp = mode === "sign-up";
-  const [doneMessage, setDoneMessage] = useState("");
   const {
     register,
     getFieldState,
@@ -38,25 +31,22 @@ export function useCredentialsForm(mode: AuthMode) {
     reset,
     setError,
     clearErrors,
-    trigger,
     formState: { errors, isSubmitted, isSubmitting },
   } = useForm<CredentialsFields>({
     mode: "onTouched",
-    defaultValues: isLogin ? { identifier: "", password: "" } : undefined,
+    defaultValues: { identifier: "", password: "" },
   });
   const hasInvalidCredentials = errors.password?.type === "invalidCredentials";
   const isIdentifierInvalid = Boolean(errors.identifier) || hasInvalidCredentials;
 
   useEffect(() => {
-    if (!isLogin) return;
-
     function resetRestoredLogin(event: PageTransitionEvent) {
       if (event.persisted) reset();
     }
 
     window.addEventListener("pageshow", resetRestoredLogin);
     return () => window.removeEventListener("pageshow", resetRestoredLogin);
-  }, [isLogin, reset]);
+  }, [reset]);
 
   function clearInvalidCredentials() {
     if (getFieldState("password").error?.type === "invalidCredentials") {
@@ -84,29 +74,16 @@ export function useCredentialsForm(mode: AuthMode) {
   }
 
   const submit = handleSubmit(async (fields) => {
-    const account = {
-      employeeCode: fields.employeeCode,
+    const result = await submitCredentials("login", {
+      identifier: fields.identifier,
       password: fields.password,
-      confirmPassword: fields.confirmPassword,
-    };
-    const result = await submitCredentials(
-      mode,
-      isLogin
-        ? { identifier: fields.identifier, password: fields.password }
-        : isSignUp
-          ? { ...account, username: fields.username }
-          : account,
-    );
+    });
     if (result.isSuccess) {
-      if (isLogin) {
-        reset();
-        router.replace("/");
-        return;
-      }
-      setDoneMessage(result.message);
+      reset();
+      router.replace("/");
       return;
     }
-    if (isLogin && result.kind === "invalidCredentials") {
+    if (result.kind === "invalidCredentials") {
       setError(
         "password",
         { type: result.kind, message: result.message },
@@ -114,10 +91,7 @@ export function useCredentialsForm(mode: AuthMode) {
       );
       return;
     }
-    const visibleFields: (keyof CredentialsFields)[] = isLogin
-      ? ["identifier", "password"]
-      : ["employeeCode", "password", "confirmPassword"];
-    if (isSignUp) visibleFields.push("username");
+    const visibleFields: (keyof CredentialsFields)[] = ["identifier", "password"];
     const fieldMessages = new Map<keyof CredentialsFields, Set<string>>();
     const formMessages = new Set<string>();
     for (const { field, message } of result.details ?? []) {
@@ -142,27 +116,16 @@ export function useCredentialsForm(mode: AuthMode) {
   });
 
   return {
-    isLogin,
-    isSignUp,
     isSubmitting,
-    doneMessage,
     errors,
     hasInvalidCredentials,
     isIdentifierInvalid,
     submit,
     fields: {
-      employeeCode: isLogin
-        ? undefined
-        : registerCredentialField("employeeCode", REQUIRED_TEXT("Enter your employee code.")),
-      username: isSignUp
-        ? registerCredentialField("username", REQUIRED_TEXT("Choose a username."))
-        : undefined,
-      identifier: isLogin
-        ? registerCredentialField("identifier", {
-            ...REQUIRED_TEXT("Enter your email or username."),
-            onChange: clearInvalidCredentials,
-          })
-        : undefined,
+      identifier: registerCredentialField("identifier", {
+        ...REQUIRED_TEXT("Enter your email or username."),
+        onChange: clearInvalidCredentials,
+      }),
       password: registerCredentialField("password", {
         required: "Enter your password.",
         minLength: {
@@ -173,23 +136,8 @@ export function useCredentialsForm(mode: AuthMode) {
           value: MAX_PASSWORD_LENGTH,
           message: `Enter no more than ${MAX_PASSWORD_LENGTH} characters.`,
         },
-        onChange: () => {
-          clearInvalidCredentials();
-          if (
-            !isLogin &&
-            (getFieldState("confirmPassword").isTouched || isSubmitted)
-          ) {
-            void trigger("confirmPassword");
-          }
-        },
+        onChange: clearInvalidCredentials,
       }),
-      confirmPassword: isLogin
-        ? undefined
-        : registerCredentialField("confirmPassword", {
-            required: "Confirm your password.",
-            validate: (value, values) =>
-              value === values.password || "Passwords must match.",
-          }),
     },
   };
 }

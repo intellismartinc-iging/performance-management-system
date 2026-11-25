@@ -6,6 +6,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import type {
+  BehavioralReviewType,
+  BehavioralTemplateCategory,
+} from '@pms/shared-types';
 
 @Entity({ name: 'behavioral_templates', schema: 'pms' })
 export class BehavioralTemplate {
@@ -14,8 +18,25 @@ export class BehavioralTemplate {
   templateId: string;
 
   @ApiProperty()
-  @Column({ name: 'company_id', type: 'uuid' })
-  companyId: string;
+  @Column({ name: 'company', type: 'text' })
+  company: string;
+
+  /** Required for a new template, in the API. NULL for a row made before the column existed. */
+  @ApiProperty({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
+
+  @ApiProperty({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
+  @ApiProperty({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  category: BehavioralTemplateCategory | null;
+
+  @ApiProperty({ nullable: true })
+  @Column({ name: 'review_type', type: 'text', nullable: true })
+  reviewType: BehavioralReviewType | null;
 
   @ApiProperty({ enum: ['draft', 'published', 'archived'] })
   @Column({ type: 'text' })

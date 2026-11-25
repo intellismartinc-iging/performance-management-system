@@ -5,11 +5,15 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.behavioral_templates (
-    template_id, company_id, status, current_version, published_by, published_at, created_at, updated_at
+    template_id, company, name, description, category, review_type,
+    status, current_version, published_by, published_at, created_at, updated_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000101',
-   1,
+   'Mayon Consolidated Inc.',
+   'Quarterly Performance Review',
+   'Reflect on observable behaviors and use specific examples.',
+   'general_performance', 'self',
    'published', 1,
    '00000000-0000-0000-0000-000000000022', now(), now(), now())
 ON CONFLICT (template_id) DO NOTHING;

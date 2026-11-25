@@ -34,6 +34,8 @@ const ENUM_COLUMNS = {
   "kpi_indicators.matrix_kind": "matrixKindSchema",
   "kpi_indicators.scale_bound": "scaleBoundSchema",
   "behavioral_templates.status": "templateVersionStatusSchema",
+  "behavioral_templates.category": "behavioralTemplateCategorySchema",
+  "behavioral_templates.review_type": "behavioralReviewTypeSchema",
   "behavioral_questions.question_type": "behavioralQuestionTypeSchema",
   "cycles.review_type": "reviewTypeSchema",
   "cycles.state": "cycleStatusSchema",

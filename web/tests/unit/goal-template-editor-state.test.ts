@@ -10,8 +10,8 @@ function detail(overrides: Partial<GoalTemplateDetailResponseDto> = {}): GoalTem
   return {
     template: {
       templateId: ID("01"),
-      positionId: 12,
-      companyId: 1,
+      position: "Software Engineer",
+      company: "Mayon Consolidated Inc.",
       name: "Engineering Manager Performance Goals",
       description: "Position targets",
       status: "published",
@@ -56,7 +56,7 @@ describe("fromGoalTemplateDetail", () => {
     expect(template).toMatchObject({
       name: "Engineering Manager Performance Goals",
       description: "Position targets",
-      position: "12",
+      position: "Software Engineer",
     });
     expect(template.indicators[0]).toMatchObject({
       id: INDICATOR_ID,
@@ -76,7 +76,7 @@ describe("fromGoalTemplateDetail", () => {
     const base = detail();
     const template = fromGoalTemplateDetail({
       ...base,
-      template: { ...base.template, name: null, description: null, positionId: null },
+      template: { ...base.template, name: null, description: null, position: null },
       indicators: [{ ...base.indicators[0]!, unit: null, target: null }],
     });
 

@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS pms.pip_plans (
     plan_id                       uuid PRIMARY KEY,
     employee_id                 uuid NOT NULL REFERENCES pms.employees(guid),
-    company_id                  bigint NOT NULL REFERENCES pms.companies(company_id),
+    company                     text NOT NULL,
     origin                      text NOT NULL CHECK (origin IN ('automatic','manual')),
     state                       text NOT NULL CHECK (state IN ('awaiting_planning','draft','active','completed','not_met','cancelled')),
     referral_review_required    boolean,   -- Pip-004/008

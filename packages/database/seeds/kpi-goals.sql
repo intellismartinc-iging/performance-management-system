@@ -5,12 +5,12 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.kpi_goal_templates (
-    template_id, position_id, company_id, name, description, status, current_version, published_by, published_at, created_at, updated_at
+    template_id, position, company, name, description, status, current_version, published_by, published_at, created_at, updated_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000041',
-   11,
-   1,
+   'Software Engineer',
+   'Mayon Consolidated Inc.',
    'Software Engineer Performance Goals',
    'Position-specific targets, weighted by indicator.',
    'published', 1,

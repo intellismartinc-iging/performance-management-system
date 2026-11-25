@@ -65,7 +65,7 @@ interface Selectable {
   status: TemplateVersionStatus;
   /** NULL for a template made before the name column existed. */
   name: string | null;
-  positionTitle: string | null;
+  position: string | null;
 }
 
 /**
@@ -82,7 +82,7 @@ export function selectGoalTemplates<Item extends Selectable>(
     const statusFilter = params.tab === "all" ? params.status : params.tab;
     return (
       (statusFilter === "all" || item.status === statusFilter) &&
-      `${item.name ?? ""} ${item.positionTitle ?? ""}`.toLowerCase().includes(query)
+      `${item.name ?? ""} ${item.position ?? ""}`.toLowerCase().includes(query)
     );
   });
 

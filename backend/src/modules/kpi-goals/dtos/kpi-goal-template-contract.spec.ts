@@ -36,15 +36,24 @@ describe("KPI goal template request contract", () => {
   ])("accepts the body the shared save schema produces on %s", async (_route, type) => {
     const body = saveGoalTemplateRequestSchema.parse({
       name: NAME,
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [indicator],
     });
 
     expect(await errorsOf(type, body)).toEqual([]);
   });
 
-  it.each([null, undefined])("accepts a company-wide template (position %s)", async (positionId) => {
-    const body = { name: NAME, positionId, indicators: [indicator] };
+  it.each(["Analyst", "Engineering Manager", "quality assurance", "HR Officer"])(
+    "accepts the position %j: any text with a visible character, not only one with a capital S",
+    async (position) => {
+      const body = { name: NAME, position, indicators: [indicator] };
+
+      expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toEqual([]);
+    },
+  );
+
+  it.each([null, undefined])("accepts a company-wide template (position %s)", async (position) => {
+    const body = { name: NAME, position, indicators: [indicator] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toEqual([]);
   });
@@ -52,26 +61,26 @@ describe("KPI goal template request contract", () => {
   it.each([
     ["create", CreateKpiGoalTemplateDto],
     ["update", UpdateKpiGoalTemplateDto],
-  ])("rejects a client-sent companyId on %s: the server sets it", async (_route, type) => {
-    const body = { name: NAME, companyId: 3, positionId: 7, indicators: [indicator] };
+  ])("rejects a client-sent company on %s: the server sets it", async (_route, type) => {
+    const body = { name: NAME, company: "Other Company", position: "Software Engineer", indicators: [indicator] };
 
-    expect(await errorsOf(type, body)).toContain("companyId");
+    expect(await errorsOf(type, body)).toContain("company");
   });
 
   it("accepts a name and a description, and trims the name", async () => {
-    const body = { name: "  " + NAME + " ", description: "Position targets", positionId: 7, indicators: [indicator] };
+    const body = { name: "  " + NAME + " ", description: "Position targets", position: "Software Engineer", indicators: [indicator] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toEqual([]);
   });
 
   it.each([undefined, "", "   ", "x".repeat(121), 7])("rejects the name %j", async (name) => {
-    const body = { name, positionId: 7, indicators: [indicator] };
+    const body = { name, position: "Software Engineer", indicators: [indicator] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("name");
   });
 
   it("rejects a description over 2000 characters", async () => {
-    const body = { name: NAME, description: "x".repeat(2001), positionId: 7, indicators: [indicator] };
+    const body = { name: NAME, description: "x".repeat(2001), position: "Software Engineer", indicators: [indicator] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("description");
   });
@@ -79,7 +88,7 @@ describe("KPI goal template request contract", () => {
   it("accepts a score with up to two decimals", async () => {
     const body = {
       name: NAME,
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [{ ...indicator, scoreBelowTarget: 3.5 }, { ...indicator, scoreBelowTarget: 3.25 }],
     };
 
@@ -87,7 +96,7 @@ describe("KPI goal template request contract", () => {
   });
 
   it.each([3.555, 5.5, 0.5, 0])("rejects the score %s", async (score) => {
-    const body = { name: NAME, positionId: 7, indicators: [{ ...indicator, scoreBelowTarget: score }] };
+    const body = { name: NAME, position: "Software Engineer", indicators: [{ ...indicator, scoreBelowTarget: score }] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("indicators");
   });
@@ -113,7 +122,7 @@ describe("KPI goal template request contract", () => {
     };
     const body = saveGoalTemplateRequestSchema.parse({
       name: NAME,
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [scale, table],
     });
 
@@ -148,7 +157,7 @@ describe("KPI goal template request contract", () => {
       },
     ],
   ])("rejects %s", async (_label, matrix) => {
-    const body = { name: NAME, positionId: 7, indicators: [{ ...indicator, ...matrix }] };
+    const body = { name: NAME, position: "Software Engineer", indicators: [{ ...indicator, ...matrix }] };
 
     expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("indicators");
   });
@@ -156,7 +165,7 @@ describe("KPI goal template request contract", () => {
   it("accepts the id of an existing indicator, and only a uuid", async () => {
     const withId = (indicatorId: string) => ({
       name: NAME,
-      positionId: 7,
+      position: "Software Engineer",
       indicators: [{ ...indicator, indicatorId }],
     });
 
@@ -167,14 +176,14 @@ describe("KPI goal template request contract", () => {
   });
 
   it("rejects a nested indicator with a score above 5 on update", async () => {
-    const body = { name: NAME, positionId: 7, indicators: [{ ...indicator, scoreTargetMet: 9 }] };
+    const body = { name: NAME, position: "Software Engineer", indicators: [{ ...indicator, scoreTargetMet: 9 }] };
 
     expect(await errorsOf(UpdateKpiGoalTemplateDto, body)).toContain("indicators");
   });
 
-  it.each([0, -1, 1.5, "abc", "7"])("rejects positionId %j", async (positionId) => {
-    const body = { name: NAME, positionId, indicators: [indicator] };
+  it.each(["", "   ", 7, "x".repeat(121)])("rejects position %j", async (position) => {
+    const body = { name: NAME, position, indicators: [indicator] };
 
-    expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("positionId");
+    expect(await errorsOf(CreateKpiGoalTemplateDto, body)).toContain("position");
   });
 });

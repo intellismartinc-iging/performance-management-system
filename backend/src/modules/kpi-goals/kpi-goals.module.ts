@@ -30,6 +30,7 @@ import { KpiIndicatorMatrixColumn } from './entities/kpi-indicator-matrix-column
   ],
   controllers: [KpiGoalsController],
   providers: [KpiGoalsService, CompanyResolver, AdminRoleGuard],
-  exports: [KpiGoalsService],
+  // CompanyResolver is shared: the behavioral templates take their company and actor from the account too.
+  exports: [KpiGoalsService, CompanyResolver],
 })
 export class KpiGoalsModule {}

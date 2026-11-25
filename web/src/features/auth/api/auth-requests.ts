@@ -1,18 +1,11 @@
 import "server-only";
 
-import type {
-  LoginRequestDto,
-  RegisterRequestDto,
-  SignUpRequestDto,
-} from "@pms/shared-types";
+import type { LoginRequestDto } from "@pms/shared-types";
 import { apiClient } from "@/api/api-client";
 import { getApiUrl } from "@/api/api-url";
 
-export function postCredentials(
-  mode: "login" | "sign-up" | "register",
-  body: LoginRequestDto | SignUpRequestDto | RegisterRequestDto,
-) {
-  const url = getApiUrl(`auth/${mode}`);
+export function postCredentials(body: LoginRequestDto) {
+  const url = getApiUrl("auth/login");
   if (!url) return null;
 
   return apiClient.post<unknown>(url, body, {

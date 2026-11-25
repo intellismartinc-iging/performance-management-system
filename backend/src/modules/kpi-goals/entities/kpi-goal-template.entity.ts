@@ -14,12 +14,12 @@ export class KpiGoalTemplate {
   templateId: string;
 
   @ApiProperty({ nullable: true })
-  @Column({ name: 'position_id', type: 'bigint', nullable: true })
-  positionId: string | null;
+  @Column({ name: 'position', type: 'text', nullable: true })
+  position: string | null;
 
   @ApiProperty()
-  @Column({ name: 'company_id', type: 'bigint' })
-  companyId: string;
+  @Column({ name: 'company', type: 'text' })
+  company: string;
 
   @ApiProperty({ nullable: true })
   @Column({ type: 'text', nullable: true })

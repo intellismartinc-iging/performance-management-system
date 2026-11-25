@@ -5,14 +5,14 @@
 -- ---------------------------------------------------------------------------
 
 INSERT INTO pms.pip_plans (
-    plan_id, employee_id, company_id, origin, state,
+    plan_id, employee_id, company, origin, state,
     referral_review_required, completion_note, cancel_reason,
     linked_evaluation_snapshot_id, created_by, created_at, closed_at
 )
 VALUES
   ('00000000-0000-0000-0000-000000000251',
-   '00000000-0000-0000-0000-000000000021',
-   1,
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
+   'Mayon Consolidated Inc.',
    'manual', 'active',
    false, NULL, NULL, NULL,
    '00000000-0000-0000-0000-000000000022', now(), NULL)
@@ -55,7 +55,7 @@ INSERT INTO pms.pip_week_updates (
 VALUES
   ('00000000-0000-0000-0000-000000000281',
    '00000000-0000-0000-0000-000000000271',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'submitted', 0.5,
    'Smoke test gate in place, blocked by flaky infra test.',
    NULL, now(), now())
