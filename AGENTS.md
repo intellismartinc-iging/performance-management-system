@@ -28,6 +28,17 @@ Apply to every request that writes or changes code. No trigger is needed. `/lean
 6. `/lean-code review` reports over-engineering in a diff. `/lean-code audit <dir>` reports it in one folder. `/lean-code debt` lists deferred items. Both report only and change no file.
 7. Load the `lean-code` skill. It reads its own reference files: the reuse ladder, TypeScript rules, function design, design principles, and design patterns.
 
+## Test-driven development (always on)
+
+Apply to every change to production code: a feature, a bug fix, or a refactor. Documentation-only changes are excluded.
+
+1. Write the failing test first. Run it and confirm that it fails for the expected reason, not for a typo or a missing import. A test that passes at once proves nothing: fix the test.
+2. Write the minimum production code that makes the test pass. Add nothing the test does not require.
+3. Refactor with the full suite green. Run the affected suite after each edit.
+4. For a fix that is already written, revert the fix, watch the new test fail for the reported reason, then reapply the fix. A test that has only ever passed is unproven.
+5. Report the red run and the green run in the closing message, each with its command and result.
+6. Load the `test-driven-development` skill when available.
+
 ## Security
 
 - Apply `security-best-practices` during every module or feature implementation when the skill is available. Validate external input at the server boundary, enforce authorization where data is accessed or changed, parameterize database queries, and keep secrets out of code, logs, and client responses. Check cookie flags and token handling when the change affects authentication.
@@ -39,7 +50,7 @@ Apply to every request that writes or changes code. No trigger is needed. `/lean
 
 - Write in present tense and active voice, in English.
 - No emojis in code, comments, or commit messages. No em dashes: use a colon, parentheses, or a new sentence. No Latin abbreviations: write "for example", "that is", "and so forth".
-- Write the failing test first (Red, Green, Refactor).
+- Follow the Test-driven development rules above: the failing test comes first.
 - Validate external input at the boundary. Use shared Zod schemas where applicable and the existing Nest DTO validators for DTO-backed API routes. Hardcode no secret, connection string, or token. Log no secret.
 - Replies use the Caveman style at tier `ultra`. Keep code, commands, paths, and negations exact.
 
@@ -98,7 +109,7 @@ export type CycleStatus = z.infer<typeof cycleStatusSchema>;
 
 - `web/` is the Next.js app. Folder rules are in `web/llm.txt`. Design tokens are in `web/DESIGN.md`.
 - `backend/` is the NestJS API. A controller parses and maps status only. A service holds the rules. A repository or TypeORM entity owns storage. Avoid N+1 queries and wrap multi-step writes in a transaction.
-- New endpoints use plural `kebab-case` nouns with no verbs, correct HTTP methods, and `400` or `422` for bad input. Existing routes with `/create` and `/update` stay until the backend owner changes them.
+- New endpoints use plural `kebab-case` nouns with no verbs, correct HTTP methods, and `400` or `422` for bad input. Existing routes with `/create` and `/update` stay until the module owner changes them.
 - Dependency direction: `web` imports `@pms/shared-types` only. `backend` imports `@pms/shared-types` and never `@pms/web`. `shared-types` imports no `@pms/*`. Import a package by its root name, never by path. Lint enforces this.
 - Auth: the web server action posts to the backend and stores the access token in the httpOnly cookie `pms-session`. `web/src/proxy.ts` gates pages. The backend verifies the token on every call.
 
@@ -114,7 +125,7 @@ export type CycleStatus = z.infer<typeof cycleStatusSchema>;
 - Do not edit the designer palette (`--base-*`, `--status-*`, `--attendance-*`, `--calendar-*`) in `web/src/styles/colors.css`.
 - Keep local agent tooling separate from tracked project rules.
 - Do not commit `.env*` except `.env.example`, or any secret.
-- Edit only the files the user names. `backend/` belongs to the backend developer: change only what the task names.
+- Edit the files the user names, the tests for them, and the handoff that this file requires. Ownership is by module, not by workspace: both developers work across `web`, `backend`, and `packages/*`, and each owns the modules they build. Change a module that the other developer owns only when the task names it, and list the change in the handoff so its owner can review it.
 - Use `docs/workspace-blueprint.md` for ownership, builds, and releases.
 
 ## Git workflow
