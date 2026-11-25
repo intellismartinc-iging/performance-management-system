@@ -11,7 +11,7 @@ INSERT INTO pms.pip_plans (
 )
 VALUES
   ('00000000-0000-0000-0000-000000000251',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'Mayon Consolidated Inc.',
    'manual', 'active',
    false, NULL, NULL, NULL,
@@ -55,7 +55,7 @@ INSERT INTO pms.pip_week_updates (
 VALUES
   ('00000000-0000-0000-0000-000000000281',
    '00000000-0000-0000-0000-000000000271',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'submitted', 0.5,
    'Smoke test gate in place, blocked by flaky infra test.',
    NULL, now(), now())

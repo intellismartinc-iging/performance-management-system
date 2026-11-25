@@ -10,7 +10,7 @@ INSERT INTO pms.notifications (
 )
 VALUES
   ('00000000-0000-0000-0000-000000000331',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'nte',
    '00000000-0000-0000-0000-000000000231',
    'You have a new Notice of Explanation: Unapproved overtime.',
@@ -25,7 +25,7 @@ ON CONFLICT (notification_id) DO NOTHING;
 
 INSERT INTO pms.notification_preferences (employee_id, review_notifications_enabled)
 VALUES
-  ('00000000-0000-0000-0000-000000000021', true),
+  ('284ddc9e-ebe4-468d-945f-fb18af72e622', true),
   ('00000000-0000-0000-0000-000000000022', true),
   ('00000000-0000-0000-0000-000000000023', true)
 ON CONFLICT (employee_id) DO NOTHING;

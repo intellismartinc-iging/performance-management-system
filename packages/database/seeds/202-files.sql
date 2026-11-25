@@ -10,8 +10,8 @@ INSERT INTO pms.journal_entries (
 )
 VALUES
   ('00000000-0000-0000-0000-000000000221',
-   '00000000-0000-0000-0000-000000000021',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'Mayon Consolidated Inc.',
    '2026-11-04', 'progress',
    'Feature release', 'Shipped the performance dashboard to production.',
@@ -27,7 +27,7 @@ INSERT INTO pms.nte_notices (
 )
 VALUES
   ('00000000-0000-0000-0000-000000000231',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'Mayon Consolidated Inc.',
    'conduct',
    'Unapproved overtime',
@@ -41,5 +41,5 @@ INSERT INTO pms.nte_read_receipts (receipt_id, notice_id, employee_id, opened_at
 VALUES
   ('00000000-0000-0000-0000-000000000241',
    '00000000-0000-0000-0000-000000000231',
-   '00000000-0000-0000-0000-000000000021', now())
+   '284ddc9e-ebe4-468d-945f-fb18af72e622', now())
 ON CONFLICT (receipt_id) DO NOTHING;

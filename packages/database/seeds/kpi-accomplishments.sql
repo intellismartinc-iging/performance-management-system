@@ -13,10 +13,10 @@ VALUES
   ('00000000-0000-0000-0000-000000000171',
    '00000000-0000-0000-0000-000000000151',
    '00000000-0000-0000-0000-000000000141',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    'submitted',
    'Strong quarter. Two milestones ahead of plan.',
-   '00000000-0000-0000-0000-000000000021', now(),
+   '284ddc9e-ebe4-468d-945f-fb18af72e622', now(),
    NULL, NULL, now(), now())
 ON CONFLICT (accomplishment_id) DO NOTHING;
 
@@ -44,5 +44,5 @@ VALUES
      )
    ),
    'Initial submission',
-   '00000000-0000-0000-0000-000000000021', now())
+   '284ddc9e-ebe4-468d-945f-fb18af72e622', now())
 ON CONFLICT (version_id) DO NOTHING;

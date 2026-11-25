@@ -171,30 +171,90 @@ test("KPI actuals allow one value per indicator in each accomplishment", () => {
 
 test("the employee and user seeds load in foreign-key order and match the backend roles", () => {
   const seed = readSeed();
-  const users = readFileSync(new URL("./schema/users.sql", import.meta.url), "utf8");
+  const users = readFileSync(
+    new URL("./schema/users.sql", import.meta.url),
+    "utf8",
+  );
 
   assert.ok(users.indexOf("pms.user_role (") < users.indexOf("pms.users ("));
-  assert.match(users, /user_role_id\s+bigint NOT NULL REFERENCES pms\.user_role\(id\)/);
+  assert.match(
+    users,
+    /user_role_id\s+bigint NOT NULL REFERENCES pms\.user_role\(id\)/,
+  );
 
-  assert.ok(seed.indexOf("INSERT INTO pms.employees") < seed.indexOf("INSERT INTO pms.users"));
-  assert.ok(seed.indexOf("INSERT INTO pms.user_role") < seed.indexOf("INSERT INTO pms.users"));
+  assert.ok(
+    seed.indexOf("INSERT INTO pms.employees") <
+      seed.indexOf("INSERT INTO pms.users"),
+  );
+  assert.ok(
+    seed.indexOf("INSERT INTO pms.user_role") <
+      seed.indexOf("INSERT INTO pms.users"),
+  );
   // ADMIN_ROLE_ID in the backend is "1"; the codes are ROLE_CODES in @pms/shared-types.
   assert.match(seed, /\(1, 'ADMIN',/);
   assert.match(seed, /\(2, 'MANAGER',/);
   assert.match(seed, /\(3, 'USER',/);
-  // Other seeds refer to these employee GUIDs.
-  for (const guid of ["021", "022", "023"]) {
-    assert.match(seed, new RegExp("'00000000-0000-0000-0000-000000000" + guid + "', " + Number(guid)));
+  // Other seeds refer to these employee GUIDs. Employee 21 is a real person now (see the next test).
+  for (const guid of ["022", "023"]) {
+    assert.match(
+      seed,
+      new RegExp(
+        "'00000000-0000-0000-0000-000000000" + guid + "', " + Number(guid),
+      ),
+    );
   }
   // Seeded accounts store bcrypt hashes, never a plain password.
   assert.match(seed, /'\$2[aby]\$10\$[./A-Za-z0-9]{53}'/);
   assert.doesNotMatch(seed, /INSERT INTO pms\.users \([^)]*\bpassword\b[^_]/);
 });
 
+test("the seeds carry the real accounts of the team databases, and no seed points at a placeholder employee", () => {
+  const seed = readSeed();
+
+  // Employee 21 is Iging DotTech, with the real GUID. The old placeholder GUID is gone from every seed.
+  assert.match(seed, /'284ddc9e-ebe4-468d-945f-fb18af72e622', 21, 'ITI-001'/);
+  assert.doesNotMatch(seed, /00000000-0000-0000-0000-000000000021/);
+
+  // Employees 21 to 27 exist: 22 and 23 are the fixtures without a login, 24 to 27 are the real accounts.
+  const employeeIds = [
+    ...seed.matchAll(/^\s+\('[0-9a-f-]{36}', (\d+), '/gm),
+  ].map((m) => Number(m[1]));
+  assert.deepEqual(employeeIds, [21, 22, 23, 24, 25, 26, 27]);
+
+  // The fixture Ramon Reyes is regular in the team databases (checked 2026-11-25), not probationary.
+  assert.match(
+    seed,
+    /'Human Resources Officer', NULL, 'Human Resources', 'Main', 'regular', 'active'/,
+  );
+  assert.doesNotMatch(seed, /'probationary'/);
+
+  // Every login: user id, employee id, role id, username. Ids and roles follow the team database.
+  const logins = [
+    ...seed.matchAll(
+      /^\s+\((\d+), (\d+), (\d+), '[^']+', '([^']+)', '\$2[aby]\$10\$/gm,
+    ),
+  ].map((m) => [Number(m[1]), Number(m[2]), Number(m[3]), m[4]]);
+  assert.deepEqual(logins, [
+    [1, 25, 1, "admin"],
+    [4, 21, 1, "admin001"],
+    [8, 26, 2, "manager"],
+    [9, 27, 3, "user"],
+    [10, 24, 1, "lebronjames023"],
+  ]);
+  for (const [, employeeId] of logins) {
+    assert.ok(
+      employeeIds.includes(employeeId),
+      "login points at employee " + employeeId,
+    );
+  }
+});
+
 test("every REFERENCES target is a table that schema.sql creates", () => {
   const schema = readSchema();
   const created = new Set(
-    [...schema.matchAll(/CREATE TABLE IF NOT EXISTS (pms\.\w+)/g)].map((m) => m[1]),
+    [...schema.matchAll(/CREATE TABLE IF NOT EXISTS (pms\.\w+)/g)].map(
+      (m) => m[1],
+    ),
   );
   const missing = [
     ...new Set(
@@ -208,7 +268,10 @@ test("every REFERENCES target is a table that schema.sql creates", () => {
 
 test("the company and position migration only expands: it drops no column and reads no public table", () => {
   const sql = readFileSync(
-    new URL("./migrations/2026-11-24-kpi-company-position-text.sql", import.meta.url),
+    new URL(
+      "./migrations/2026-11-24-kpi-company-position-text.sql",
+      import.meta.url,
+    ),
     "utf8",
   );
   assert.doesNotMatch(sql, /DROP\s+COLUMN/i);
@@ -220,7 +283,10 @@ test("the company and position migration only expands: it drops no column and re
 
 test("the behavioral template details migration only adds columns and checks", () => {
   const sql = readFileSync(
-    new URL("./migrations/2026-11-24-behavioral-template-details.sql", import.meta.url),
+    new URL(
+      "./migrations/2026-11-24-behavioral-template-details.sql",
+      import.meta.url,
+    ),
     "utf8",
   );
   assert.doesNotMatch(sql, /DROP\s+(COLUMN|TABLE)/i);

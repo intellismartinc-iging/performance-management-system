@@ -20,10 +20,10 @@ VALUES
   ('00000000-0000-0000-0000-000000000202',
    '00000000-0000-0000-0000-000000000141',
    '00000000-0000-0000-0000-000000000151',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    '00000000-0000-0000-0000-000000000161',
    'submitted', now() + interval '7 days',
-   '00000000-0000-0000-0000-000000000021', now(), now(), now(), now())
+   '284ddc9e-ebe4-468d-945f-fb18af72e622', now(), now(), now(), now())
 ON CONFLICT (assignment_id) DO NOTHING;
 
 INSERT INTO pms.assignment_responses (
@@ -38,5 +38,5 @@ VALUES
      '00000000-0000-0000-0000-000000000132', 4
    ),
    1, 'submitted',
-   '00000000-0000-0000-0000-000000000021', now(), now())
+   '284ddc9e-ebe4-468d-945f-fb18af72e622', now(), now())
 ON CONFLICT (response_id) DO NOTHING;

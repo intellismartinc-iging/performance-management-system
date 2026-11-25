@@ -11,7 +11,7 @@ INSERT INTO pms.operational_goals (
 )
 VALUES
   ('00000000-0000-0000-0000-000000000301',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    '00000000-0000-0000-0000-000000000022',
    'Mayon Consolidated Inc.',
    'Adopt PMS', 'Adopt PMS across the Engineering department.',
@@ -42,7 +42,7 @@ INSERT INTO pms.goal_progress_updates (
 VALUES
   ('00000000-0000-0000-0000-000000000321',
    '00000000-0000-0000-0000-000000000301',
-   '00000000-0000-0000-0000-000000000021',
+   '284ddc9e-ebe4-468d-945f-fb18af72e622',
    40.00,
    'Rollout plan drafted and circulated.',
    jsonb_build_array(

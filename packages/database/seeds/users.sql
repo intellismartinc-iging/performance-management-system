@@ -1,12 +1,17 @@
--- Development fixtures only. Populates roles and one login per seeded employee (schema/users.sql).
+-- Development fixtures only. Populates roles and the logins of the team databases (schema/users.sql).
 --
--- Every seeded account signs in with the development password Seed-Pass-2026.
--- password_hash holds its bcrypt hash (cost 10, as the backend uses). Never use it outside a local database.
+-- The ids, roles, usernames, emails, and employees below are copied from pms.users as the developers
+-- hold it, so every database shares them. Every seeded account signs in with the development
+-- password Seed-Pass-2026. password_hash holds its bcrypt hash (cost 10, as the backend uses).
+-- The real password of an account stays in the database that holds it: never put it in this file.
+-- Never use these accounts or this password outside a local database.
 --
---   username  role     employee
---   jdelacruz USER     EMP-001 (21)
---   msantos   MANAGER  EMP-002 (22)
---   rreyes    ADMIN    EMP-003 (23)
+--   id  username        role     employee
+--   1   admin           ADMIN    admin (25)
+--   4   admin001        ADMIN    ITI-001 (21)
+--   8   manager         MANAGER  ITI-002 (26)
+--   9   user            USER     ITI-003 (27)
+--   10  lebronjames023  ADMIN    SIXERS-023 (24)
 
 -- ---------------------------------------------------------------------------
 -- 14. Roles and Users
@@ -25,9 +30,11 @@ INSERT INTO pms.users (
     failed_login_attempts, login_locked_until, created_at, updated_at
 )
 VALUES
-  (1, 21, 3, 'employee1@example.invalid', 'jdelacruz', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
-  (2, 22, 2, 'employee2@example.invalid', 'msantos', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
-  (3, 23, 1, 'employee3@example.invalid', 'rreyes', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now())
+  (1, 25, 1, 'admin@hrdotnet.com', 'admin', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
+  (4, 21, 1, 'iging@hrdotnet.com', 'admin001', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
+  (8, 26, 2, 'iging@managerdotnet.com', 'manager', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
+  (9, 27, 3, 'iging@userdotnet.com', 'user', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now()),
+  (10, 24, 1, 'lebronjames@gmail.com', 'lebronjames023', '$2b$10$ZmihHjnemPnjn37cmY3LzuoPC6UswADN2neAsJqHATG.Khtnh5k6G', 0, NULL, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Advance the identity past the explicit fixture ids.
