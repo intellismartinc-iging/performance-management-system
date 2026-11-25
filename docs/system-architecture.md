@@ -603,6 +603,7 @@ web/                                                # @pms/web: Next.js app (exp
 │   │           ├── indicator-matrix.ts
 │   │           ├── manage-behavioral-template.ts
 │   │           ├── manage-goal-template.ts         # Server actions: save draft, publish, update (new version)
+│   │           ├── publish-confirmation.ts         # The words of the dialog before a publish, for KPI and behavioral
 │   │           ├── save-behavioral-template.ts
 │   │           └── template-requests.ts            # Turns editor state into a request body
 │   ├── hooks/                                      # Hooks shared by two or more features
@@ -640,11 +641,13 @@ web/                                                # @pms/web: Next.js app (exp
 │   │   ├── behavioral-template-create-form.test.tsx
 │   │   ├── behavioral-template-details-view.test.tsx
 │   │   ├── behavioral-template-edit-form.test.tsx
+│   │   ├── behavioral-template-editor-leave.test.tsx
 │   │   ├── behavioral-template-list.test.tsx
 │   │   ├── credentials-form.test.tsx
 │   │   ├── goal-template-create-form.test.tsx
 │   │   ├── goal-template-edit-modes.test.tsx
 │   │   ├── goal-template-listing.test.tsx
+│   │   ├── goal-template-publish-confirmation.test.tsx
 │   │   ├── goal-template-saved-notice.test.tsx
 │   │   ├── indicator-matrix-editor.test.tsx
 │   │   └── workspace-account-menu.test.tsx
