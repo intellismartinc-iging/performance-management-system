@@ -20,14 +20,19 @@ export function newSection(): Section {
   return { id: crypto.randomUUID(), name: "", questions: [newQuestion()] };
 }
 
-/** An empty builder: no name, one section with one question, and the first category and review type. */
+/**
+ * An empty builder: no name, one section with one question, and the first category and review type.
+ * The ids are fixed: the server and the browser both render this template, and random ids make
+ * their HTML differ (a hydration mismatch). Sections and questions added later get random ids,
+ * because they are made in the browser only.
+ */
 export function newBehavioralTemplate(): BehavioralTemplate {
   return {
     name: "",
     description: "",
     category: "general_performance",
     reviewType: "self",
-    sections: [newSection()],
+    sections: [{ ...newSection(), id: "section-1", questions: [{ ...newQuestion(), id: "question-1" }] }],
   };
 }
 
@@ -44,7 +49,6 @@ export function moveItem<Item>(list: readonly Item[], index: number, by: -1 | 1)
 
 /** Two empty options when a question becomes multiple choice: the inputs show "Option 1" and "Option 2" as placeholders only. */
 export const DEFAULT_CHOICES = ["", ""] as const;
-
 /** The questions with a copy of the question `id`, with a new id, right after it. */
 export function duplicateQuestion(questions: readonly Question[], id: string): Question[] {
   const index = questions.findIndex((question) => question.id === id);

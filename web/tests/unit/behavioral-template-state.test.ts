@@ -53,4 +53,8 @@ describe("newBehavioralTemplate", () => {
     expect(template.sections[0]!.questions).toHaveLength(1);
     expect(template.sections[0]!.questions[0]).toMatchObject({ type: "rating_scale", required: true });
   });
+
+  it("gives the same ids every time: the server and the browser both render it, and random ids make the HTML differ", () => {
+    expect(newBehavioralTemplate()).toEqual(newBehavioralTemplate());
+  });
 });

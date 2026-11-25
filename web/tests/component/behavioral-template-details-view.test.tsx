@@ -1,5 +1,5 @@
 import type { BehavioralTemplateTreeResponseDto } from "@pms/shared-types";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BehavioralTemplateDetailsView } from "@/features/review-templates/components/behavioral-template-details-view";
@@ -9,6 +9,8 @@ vi.mock("@/features/review-templates/services/manage-behavioral-template", () =>
   publishBehavioralTemplate: vi.fn(),
   saveBehavioralTemplateEdits: vi.fn(),
 }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const id = (n: number) => `3f2504e0-4f89-41d3-9a0c-0305e82c33${String(n).padStart(2, "0")}`;
 const PATH = "/reviews/templates/behavioral-assessment-template";
@@ -93,13 +95,28 @@ describe("BehavioralTemplateDetailsView", () => {
     expect(screen.queryByRole("button", { name: /publish/i })).toBeNull();
   });
 
-  it("publishes the draft with its id", async () => {
+  it("asks first, and publishes the draft with its id once the user confirms", async () => {
     const user = userEvent.setup();
     render(<BehavioralTemplateDetailsView tree={tree("draft")} />);
 
     await user.click(screen.getByRole("button", { name: "Publish Template" }));
 
+    const dialog = await screen.findByRole("alertdialog", { name: "Publish this template?" });
+    expect(publishBehavioralTemplate).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Publish Template" }));
+
     expect(publishBehavioralTemplate).toHaveBeenCalledWith(id(1));
+  });
+
+  it("publishes nothing when the user cancels", async () => {
+    const user = userEvent.setup();
+    render(<BehavioralTemplateDetailsView tree={tree("draft")} />);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Cancel" }));
+
+    expect(publishBehavioralTemplate).not.toHaveBeenCalled();
   });
 
   it("shows the reason when the API refuses to publish", async () => {
@@ -108,6 +125,7 @@ describe("BehavioralTemplateDetailsView", () => {
     render(<BehavioralTemplateDetailsView tree={tree("draft")} />);
 
     await user.click(screen.getByRole("button", { name: "Publish Template" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Publish Template" }));
 
     expect(await screen.findByText("The template is already published.")).toBeTruthy();
   });

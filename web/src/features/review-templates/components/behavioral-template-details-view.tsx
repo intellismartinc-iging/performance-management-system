@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { BehavioralTemplateTreeResponseDto } from "@pms/shared-types";
 
 import { StatusBadge } from "@/components/atoms/status-badge";
+import { ConfirmationDialog } from "@/components/molecules/confirmation-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BEHAVIORAL_TEMPLATE_PATH } from "@/constants/behavioral-template-path";
@@ -14,6 +15,7 @@ import {
 } from "@/constants/domain-labels";
 import { BehavioralTemplateEditor } from "@/features/review-templates/components/behavioral-template-editor";
 import { fromBehavioralTemplateTree } from "@/features/review-templates/services/behavioral-template-editor-state";
+import { PUBLISH_CONFIRMATION } from "@/features/review-templates/services/publish-confirmation";
 import { publishBehavioralTemplate } from "@/features/review-templates/services/manage-behavioral-template";
 
 /**
@@ -24,6 +26,7 @@ import { publishBehavioralTemplate } from "@/features/review-templates/services/
  */
 export function BehavioralTemplateDetailsView({ tree }: { tree: BehavioralTemplateTreeResponseDto }) {
   const [message, setMessage] = useState("");
+  const [asking, setAsking] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { templateId, status, currentVersion } = tree.template;
 
@@ -65,7 +68,7 @@ export function BehavioralTemplateDetailsView({ tree }: { tree: BehavioralTempla
               >
                 Edit Draft
               </Link>
-              <Button type="button" className="min-h-pms-touch" disabled={isPending} onClick={publish}>
+              <Button type="button" className="min-h-pms-touch" disabled={isPending} onClick={() => setAsking(true)}>
                 Publish Template
               </Button>
             </>
@@ -78,6 +81,17 @@ export function BehavioralTemplateDetailsView({ tree }: { tree: BehavioralTempla
             </Link>
           ) : null
         }
+      />
+      <ConfirmationDialog
+        open={asking}
+        title={PUBLISH_CONFIRMATION.title}
+        description={PUBLISH_CONFIRMATION.description}
+        confirmLabel={PUBLISH_CONFIRMATION.confirmLabel}
+        onClose={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          publish();
+        }}
       />
     </>
   );

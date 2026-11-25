@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { GoalTemplateDetailResponseDto } from "@pms/shared-types";
 
 import { StatusBadge } from "@/components/atoms/status-badge";
+import { ConfirmationDialog } from "@/components/molecules/confirmation-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { GOAL_TEMPLATE_PATH } from "@/constants/goal-template-path";
@@ -14,6 +15,7 @@ import {
 } from "@/constants/domain-labels";
 import { KpiGoalTemplateEditor } from "@/features/review-templates/components/kpi-goal-template-editor";
 import { fromGoalTemplateDetail } from "@/features/review-templates/services/goal-template-editor-state";
+import { PUBLISH_CONFIRMATION } from "@/features/review-templates/services/publish-confirmation";
 import { publishGoalTemplate } from "@/features/review-templates/services/manage-goal-template";
 
 interface GoalTemplateDetailsViewProps {
@@ -28,6 +30,7 @@ interface GoalTemplateDetailsViewProps {
  */
 export function GoalTemplateDetailsView({ detail, positions }: GoalTemplateDetailsViewProps) {
   const [message, setMessage] = useState("");
+  const [asking, setAsking] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { templateId, status, currentVersion } = detail.template;
   const editHref = `${GOAL_TEMPLATE_PATH}/${templateId}/edit`;
@@ -77,7 +80,7 @@ export function GoalTemplateDetailsView({ detail, positions }: GoalTemplateDetai
                 type="button"
                 className="min-h-pms-touch"
                 disabled={isPending}
-                onClick={publish}
+                onClick={() => setAsking(true)}
               >
                 Publish Template
               </Button>
@@ -88,6 +91,17 @@ export function GoalTemplateDetailsView({ detail, positions }: GoalTemplateDetai
             </Link>
           ) : null
         }
+      />
+      <ConfirmationDialog
+        open={asking}
+        title={PUBLISH_CONFIRMATION.title}
+        description={PUBLISH_CONFIRMATION.description}
+        confirmLabel={PUBLISH_CONFIRMATION.confirmLabel}
+        onClose={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          publish();
+        }}
       />
     </>
   );

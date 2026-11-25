@@ -10,6 +10,8 @@ vi.mock("@/features/review-templates/services/manage-behavioral-template", () =>
   publishBehavioralTemplate: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
 const id = (n: number) => `3f2504e0-4f89-41d3-9a0c-0305e82c33${String(n).padStart(2, "0")}`;
 const PATH = "/reviews/templates/behavioral-assessment-template";
 
@@ -79,13 +81,29 @@ describe("BehavioralTemplateEditForm", () => {
     );
   });
 
-  it("publishes with the publish intent", async () => {
+  it("asks first before it publishes a draft, and sends the publish intent once the user confirms", async () => {
     const user = userEvent.setup();
     render(<BehavioralTemplateEditForm tree={TREE} />);
 
     await user.click(screen.getByRole("button", { name: "Publish Template" }));
 
+    const dialog = await screen.findByRole("alertdialog", { name: "Publish this template?" });
+    expect(dialog.textContent).toContain("A published template is frozen. To change it later, you publish a new version.");
+    expect(saveBehavioralTemplateEdits).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Publish Template" }));
+
     expect(saveBehavioralTemplateEdits).toHaveBeenCalledWith(id(1), expect.anything(), "publish");
+  });
+
+  it("sends nothing when the user cancels the publish", async () => {
+    const user = userEvent.setup();
+    render(<BehavioralTemplateEditForm tree={TREE} />);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Cancel" }));
+
+    expect(saveBehavioralTemplateEdits).not.toHaveBeenCalled();
   });
 
   describe("a published template", () => {

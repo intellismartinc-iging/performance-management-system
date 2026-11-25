@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowDownIcon, ArrowUpIcon, ChevronLeftIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   BEHAVIORAL_QUESTION_TYPES,
@@ -14,12 +15,14 @@ import {
 
 import { ErrorSummary, type ErrorSummaryItem } from "@/components/molecules/error-summary";
 import { FormSelect } from "@/components/molecules/form-select";
+import { UnsavedChangesDialog } from "@/components/molecules/unsaved-changes-dialog";
 import { FormPageTemplate } from "@/components/templates/form-page-template";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import {
   BEHAVIORAL_QUESTION_TYPE_LABELS,
   BEHAVIORAL_REVIEW_TYPE_LABELS,
@@ -159,12 +162,29 @@ export function BehavioralTemplateEditor({
   headerActions,
   statusLine,
 }: BehavioralTemplateEditorProps) {
-  const [template, setTemplate] = useState<BehavioralTemplate>(
+  const router = useRouter();
+  // The template the page opened with, kept so the page can start over from it.
+  const [startingTemplate] = useState<BehavioralTemplate>(
     () => initialTemplate ?? newBehavioralTemplate(),
   );
+  const [template, setTemplate] = useState<BehavioralTemplate>(startingTemplate);
   const [formErrors, setFormErrors] = useState<ErrorSummaryItem[]>([]);
   const [isPreviewing, setIsPreview] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const isPreview = readOnly || isPreviewing;
+  useUnsavedChangesWarning(isDirty);
+
+  // Next keeps the state of a page you leave, and shows it again when you return.
+  // Start again from the saved template (or a blank one) whenever the user leaves.
+  const startOver = useCallback(() => {
+    setTemplate(startingTemplate);
+    setFormErrors([]);
+    setIsPreview(false);
+    setIsDirty(false);
+    setIsLeaving(false);
+  }, [startingTemplate]);
+  useEffect(() => startOver, [startOver]);
 
   // Stable between renders, so the summary takes focus once per error, not per keystroke.
   const errors = useMemo<ErrorSummaryItem[]>(
@@ -177,6 +197,7 @@ export function BehavioralTemplateEditor({
 
   function update(changes: Partial<BehavioralTemplate>) {
     setTemplate({ ...template, ...changes });
+    setIsDirty(true);
     setFormErrors([]);
     onEdit?.();
   }
@@ -215,6 +236,11 @@ export function BehavioralTemplateEditor({
         <Link
           href={backHref}
           className="inline-flex min-h-pms-touch w-fit items-center gap-1 rounded-pms-control text-pms-label text-muted-foreground hover:underline"
+          onClick={(event) => {
+            if (!isDirty) return;
+            event.preventDefault();
+            setIsLeaving(true);
+          }}
         >
           <ChevronLeftIcon aria-hidden="true" className="size-4" />
           {mode === "edit" ? "Back to Template Details" : "Back to Behavioral Assessment Templates"}
@@ -563,6 +589,14 @@ export function BehavioralTemplateEditor({
           )}
         </form>
       </FormPageTemplate>
+      <UnsavedChangesDialog
+        open={isLeaving}
+        onStay={() => setIsLeaving(false)}
+        onLeave={() => {
+          startOver();
+          router.push(backHref);
+        }}
+      />
     </div>
   );
 }

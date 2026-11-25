@@ -80,6 +80,38 @@ describe("GoalTemplateCreateForm", () => {
     expect(screen.queryByRole("group", { name: "Indicator 2" })).toBeNull();
   });
 
+  it("asks first before it publishes, and calls the server only after the user confirms", async () => {
+    vi.mocked(createGoalTemplate).mockResolvedValue({ message: "" });
+    const user = userEvent.setup();
+    render(<GoalTemplateCreateForm positions={POSITIONS} />);
+    await user.type(screen.getByLabelText(/^Template Name/), "Software Engineer Performance Goals");
+    await user.click(screen.getByRole("combobox", { name: /applicable position/i }));
+    await user.click(await screen.findByRole("option", { name: "Engineering Manager" }));
+    await user.type(screen.getByLabelText("Indicator Name"), "Delivery rate");
+    const weight = screen.getByLabelText("Weight (%)");
+    await user.clear(weight);
+    await user.type(weight, "100");
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+
+    const dialog = await screen.findByRole("alertdialog", { name: "Publish this template?" });
+    expect(createGoalTemplate).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Publish Template" }));
+
+    expect(createGoalTemplate).toHaveBeenCalledWith(expect.anything(), "publish");
+  });
+
+  it("opens no dialog for a template that the builder refuses: with no name, Publish Template stops at the builder's own check", async () => {
+    const user = userEvent.setup();
+    render(<GoalTemplateCreateForm positions={POSITIONS} />);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(createGoalTemplate).not.toHaveBeenCalled();
+  });
+
   it("marks invalid controls inline and focuses the first one, the template name", async () => {
     const user = userEvent.setup();
     render(<GoalTemplateCreateForm positions={POSITIONS} />);

@@ -94,6 +94,7 @@ describe("BehavioralTemplateCreateForm", () => {
     await user.click(screen.getByRole("checkbox", { name: "Allow Not Observed" }));
 
     await user.click(screen.getByRole("button", { name: "Publish Template" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Publish Template" }));
 
     expect(createBehavioralTemplate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -101,6 +102,40 @@ describe("BehavioralTemplateCreateForm", () => {
       }),
       "publish",
     );
+  });
+
+  it("asks first before it publishes, because a published template is frozen", async () => {
+    const user = userEvent.setup();
+    render(<BehavioralTemplateCreateForm />);
+    await fillRequired(user);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+
+    const dialog = await screen.findByRole("alertdialog", { name: "Publish this template?" });
+    expect(dialog.textContent).toContain("A published template is frozen. To change it later, you publish a new version.");
+    expect(createBehavioralTemplate).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing when the user cancels the publish, and keeps what the user typed", async () => {
+    const user = userEvent.setup();
+    render(<BehavioralTemplateCreateForm />);
+    await fillRequired(user);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Cancel" }));
+
+    expect(createBehavioralTemplate).not.toHaveBeenCalled();
+    expect((screen.getByLabelText(/question title/i) as HTMLInputElement).value).toBe("Meets deadlines?");
+  });
+
+  it("checks the template before it asks to publish: no dialog for a template with no name", async () => {
+    const user = userEvent.setup();
+    render(<BehavioralTemplateCreateForm />);
+
+    await user.click(screen.getByRole("button", { name: "Publish Template" }));
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(await screen.findAllByText("Enter a template name.")).not.toHaveLength(0);
   });
 
   it("asks for the template name before it calls the server", async () => {
