@@ -100,6 +100,8 @@ describe('BehavioralAssessmentService', () => {
     manager.create.mockReset().mockImplementation((_entity: unknown, data: unknown) => data);
     manager.delete.mockReset();
     manager.getRepository.mockReset().mockImplementation((entity: unknown) => {
+      if (entity === BehavioralTemplate) return templates;
+      if (entity === BehavioralTemplateVersion) return versions;
       if (entity === BehavioralSection) return sections;
       if (entity === BehavioralQuestion) return questions;
       if (entity === BehavioralChoiceOption) return options;
@@ -199,6 +201,69 @@ describe('BehavioralAssessmentService', () => {
       );
     });
 
+    it('saves the template, the version, and the content in one transaction', async () => {
+      templates.findOne.mockResolvedValue({ templateId: 't-1', status: 'draft' } as BehavioralTemplate);
+      const dto = {
+        name: 'Quarterly Review',
+        sections: [{ title: 'S', questions: [{ prompt: 'Q', questionType: 'short_answer' as const }] }],
+      } as unknown as CreateBehavioralTemplateDto;
+
+      await service.create(dto, 'user-1');
+
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ['the same label twice', ['Yes', 'Yes']],
+      ['labels that differ only by case', ['Yes', 'yes']],
+      ['labels that differ only by spaces', ['Yes', ' Yes ']],
+      ['a blank label', ['Yes', '   ']],
+    ])('refuses %s with a 400 before any write', async (_label, labels) => {
+      const dto = {
+        sections: [
+          {
+            title: 'S',
+            questions: [
+              { prompt: 'Pick', questionType: 'multiple_choice' as const, choiceOptions: labels.map((label) => ({ label })) },
+            ],
+          },
+        ],
+      } as unknown as CreateBehavioralTemplateDto;
+
+      await expect(service.create(dto, 'user-1')).rejects.toThrow(BadRequestException);
+
+      expect(dataSource.transaction).not.toHaveBeenCalled();
+      expect(templates.save).not.toHaveBeenCalled();
+      expect(versions.save).not.toHaveBeenCalled();
+      expect(sections.save).not.toHaveBeenCalled();
+    });
+
+    it('saves no options for a question that is not multiple choice, even when the request carries some', async () => {
+      templates.findOne.mockResolvedValue({ templateId: 't-1', status: 'draft' } as BehavioralTemplate);
+      const dto = {
+        sections: [
+          {
+            title: 'S',
+            questions: [
+              { prompt: 'Rate', questionType: 'rating_scale', choiceOptions: [{ label: 'Yes' }, { label: 'Yes' }] },
+            ],
+          },
+        ],
+      } as unknown as CreateBehavioralTemplateDto;
+
+      await service.create(dto, 'user-1');
+
+      expect(options.create).not.toHaveBeenCalled();
+      expect(options.save).not.toHaveBeenCalled();
+    });
+
+    it('still saves a draft with no section: only a published version needs content', async () => {
+      templates.findOne.mockResolvedValue({ templateId: 't-1', status: 'draft' } as BehavioralTemplate);
+      const dto = { name: 'Empty draft', sections: [] } as unknown as CreateBehavioralTemplateDto;
+
+      await expect(service.create(dto, 'user-1')).resolves.toBeDefined();
+    });
+
     it('stores allowNotObserved only for rating_scale questions', async () => {
       templates.findOne.mockResolvedValue({
         templateId: 't-1',
@@ -254,6 +319,40 @@ describe('BehavioralAssessmentService', () => {
       await expect(
         service.update('t-1', { sections: [] } as unknown as never),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('refuses duplicate options with a 400 before it deletes the old content of the draft', async () => {
+      templates.findOne.mockResolvedValue({ templateId: 't-1', status: 'draft' } as BehavioralTemplate);
+      versions.findOne.mockResolvedValue({ versionId: 'v-1', frozenAt: null } as BehavioralTemplateVersion);
+      const dto = {
+        sections: [
+          {
+            title: 'S',
+            questions: [
+              { prompt: 'Pick', questionType: 'multiple_choice', choiceOptions: [{ label: 'Yes' }, { label: 'yes' }] },
+            ],
+          },
+        ],
+      } as unknown as never;
+
+      await expect(service.update('t-1', dto)).rejects.toThrow(BadRequestException);
+
+      expect(sections.delete).not.toHaveBeenCalled();
+      expect(questions.delete).not.toHaveBeenCalled();
+      expect(options.delete).not.toHaveBeenCalled();
+      expect(templates.save).not.toHaveBeenCalled();
+    });
+
+    it('replaces the details and the content in one transaction, with the template row locked', async () => {
+      templates.findOne.mockResolvedValue({ templateId: 't-1', status: 'draft' } as BehavioralTemplate);
+      versions.findOne.mockResolvedValue({ versionId: 'v-1', frozenAt: null } as BehavioralTemplateVersion);
+
+      await service.update('t-1', { sections: [] } as unknown as never);
+
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(templates.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
+      );
     });
 
     it('changes the details of a draft only for the fields it is given', async () => {
@@ -422,7 +521,7 @@ describe('BehavioralAssessmentService', () => {
   });
 
   describe('publish', () => {
-    it('freezes the active version and publishes the draft', async () => {
+    const draftWithContent = () => {
       templates.findOne.mockResolvedValue({
         templateId: 't-1',
         status: 'draft',
@@ -431,6 +530,37 @@ describe('BehavioralAssessmentService', () => {
         versionId: 'v-1',
         frozenAt: null,
       } as BehavioralTemplateVersion);
+      sections.find.mockResolvedValue([{ sectionId: 's-1' } as BehavioralSection]);
+      questions.find.mockResolvedValue([{ questionId: 'q-1', sectionId: 's-1' } as BehavioralQuestion]);
+    };
+
+    it.each([
+      ['no section', [], []],
+      ['a section with no question', [{ sectionId: 's-1' }], []],
+    ])('refuses a draft with %s with a 400, and freezes nothing', async (_label, sectionRows, questionRows) => {
+      draftWithContent();
+      sections.find.mockResolvedValue(sectionRows as BehavioralSection[]);
+      questions.find.mockResolvedValue(questionRows as BehavioralQuestion[]);
+
+      await expect(service.publish('t-1', 'user-1')).rejects.toThrow(BadRequestException);
+
+      expect(versions.save).not.toHaveBeenCalled();
+      expect(templates.save).not.toHaveBeenCalled();
+    });
+
+    it('freezes the version and publishes the template in one transaction, with the row locked', async () => {
+      draftWithContent();
+
+      await service.publish('t-1', 'user-1');
+
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(templates.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
+      );
+    });
+
+    it('freezes the active version and publishes the draft', async () => {
+      draftWithContent();
 
       const result = await service.publish('t-1', 'user-1');
 

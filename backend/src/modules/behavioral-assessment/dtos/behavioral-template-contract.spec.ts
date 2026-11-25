@@ -84,6 +84,16 @@ describe("behavioral template request contract", () => {
     expect(saveBehavioralTemplateRequestSchema.safeParse(body).success).toBe(false);
   });
 
+  it.each([
+    ["create", CreateBehavioralTemplateDto],
+    ["update", UpdateBehavioralTemplateDto],
+  ])("refuses a blank option label on %s", async (_route, type) => {
+    const question = { prompt: "Pick", questionType: "multiple_choice", choiceOptions: [{ label: "Yes" }, { label: "   " }] };
+    const body = { ...draft, sections: [{ title: "S", questions: [question] }] };
+
+    expect(await errorPaths(type, body)).toContain("sections.0.questions.0.choiceOptions.1.label");
+  });
+
   it("refuses a section with no question, and a template with no section", () => {
     expect(saveBehavioralTemplateRequestSchema.safeParse({ sections: [] }).success).toBe(false);
     expect(saveBehavioralTemplateRequestSchema.safeParse({ sections: [{ title: "S", questions: [] }] }).success).toBe(false);

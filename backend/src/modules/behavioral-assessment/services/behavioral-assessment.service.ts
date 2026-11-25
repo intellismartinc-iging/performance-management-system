@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, IsNull, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { BehavioralTemplate } from '../entities/behavioral-template.entity.js';
 import { BehavioralTemplateVersion } from '../entities/behavioral-template-version.entity.js';
@@ -18,19 +18,44 @@ import { UpdateBehavioralTemplateDto } from '../dtos/update-behavioral-template.
 import type { TemplateTree } from '../types/template-tree.types.js';
 import { CompanyResolver } from '../../kpi-goals/services/company-resolver.service.js';
 
-/** The repositories that save the content of a version: the injected ones, or those of a transaction. */
-interface ContentStores {
+/** The repositories of one unit of work: the injected ones, or those of a transaction. */
+interface Stores {
+  templates: Repository<BehavioralTemplate>;
+  versions: Repository<BehavioralTemplateVersion>;
   sections: Repository<BehavioralSection>;
   questions: Repository<BehavioralQuestion>;
   options: Repository<BehavioralChoiceOption>;
 }
 
+const LOCK_FOR_WRITE = { mode: 'pessimistic_write' } as const;
+
 /** A frozen version needs content: at least one section, and a question in every section. */
-function assertPublishable(sections: SectionDto[]): void {
+function assertPublishable(sections: { questions?: unknown[] }[]): void {
   if (sections.length === 0 || sections.some((section) => (section.questions ?? []).length === 0)) {
     throw new BadRequestException(
       'A published template needs at least one section, and a question in every section.',
     );
+  }
+}
+
+/**
+ * Checks every multiple choice question before any write: two or more options,
+ * none blank, none twice. Labels compare trimmed and without case, like the web
+ * form: the database `UNIQUE (question_id, label)` compares exact text only.
+ */
+function assertValidOptions(sections: SectionDto[]): void {
+  for (const question of sections.flatMap((section) => section.questions ?? [])) {
+    if (question.questionType !== 'multiple_choice') continue;
+    const labels = (question.choiceOptions ?? []).map((option) => option.label.trim().toLowerCase());
+    if (labels.length < 2) {
+      throw new BadRequestException('multiple_choice questions require at least two choice options');
+    }
+    if (labels.some((label) => label === '')) {
+      throw new BadRequestException('A choice option cannot be blank');
+    }
+    if (new Set(labels).size !== labels.length) {
+      throw new BadRequestException('A multiple_choice question cannot have the same option twice');
+    }
   }
 }
 
@@ -59,94 +84,112 @@ export class BehavioralAssessmentService {
     dto: CreateBehavioralTemplateDto,
     userId: string,
   ): Promise<TemplateTree> {
+    assertValidOptions(dto.sections);
     const { company, actorId } = await this.companies.resolveAccount(userId);
     const templateId = randomUUID();
     const versionId = randomUUID();
 
-    const template = this.templates.create({
-      templateId,
-      company,
-      name: dto.name,
-      description: dto.description?.trim() || null,
-      category: dto.category,
-      reviewType: dto.reviewType,
-      status: 'draft',
-      currentVersion: 1,
-      publishedBy: null,
-      publishedAt: null,
-      archivedAt: null,
+    await this.inTransaction(async (stores) => {
+      await stores.templates.save(
+        stores.templates.create({
+          templateId,
+          company,
+          name: dto.name,
+          description: dto.description?.trim() || null,
+          category: dto.category,
+          reviewType: dto.reviewType,
+          status: 'draft',
+          currentVersion: 1,
+          publishedBy: null,
+          publishedAt: null,
+          archivedAt: null,
+        }),
+      );
+      await stores.versions.save(
+        stores.versions.create({
+          versionId,
+          templateId,
+          version: 1,
+          frozenAt: null,
+          createdBy: actorId,
+        }),
+      );
+      await this.saveSections(dto.sections, versionId, stores);
     });
-    await this.templates.save(template);
-
-    const version = this.versions.create({
-      versionId,
-      templateId,
-      version: 1,
-      frozenAt: null,
-      createdBy: actorId,
-    });
-    await this.versions.save(version);
-
-    await this.saveSections(dto.sections, versionId);
 
     return this.findTree(templateId);
   }
 
+  /** A draft may be saved with no content: only a published version needs it. */
   async update(
     templateId: string,
     dto: UpdateBehavioralTemplateDto,
   ): Promise<TemplateTree> {
-    const template = await this.findTemplate(templateId);
-    if (template.status !== 'draft') {
-      throw new ConflictException(
-        'Only draft templates can be updated. Publish or archive first.',
-      );
-    }
+    assertValidOptions(dto.sections);
 
-    const activeVersion = await this.findActiveDraftVersion(templateId);
-    if (!activeVersion) {
-      throw new NotFoundException('No active draft version found for template');
-    }
+    await this.inTransaction(async (stores) => {
+      const template = await this.lockTemplate(stores, templateId);
+      if (template.status !== 'draft') {
+        throw new ConflictException(
+          'Only draft templates can be updated. Publish or archive first.',
+        );
+      }
+      const activeVersion = await this.findActiveDraftVersion(stores, templateId);
 
-    if (dto.name !== undefined) template.name = dto.name.trim();
-    if (dto.description !== undefined) {
-      template.description = dto.description.trim() || null;
-    }
-    if (dto.category !== undefined) template.category = dto.category;
-    if (dto.reviewType !== undefined) template.reviewType = dto.reviewType;
-    await this.templates.save(template);
+      if (dto.name !== undefined) template.name = dto.name.trim();
+      if (dto.description !== undefined) {
+        template.description = dto.description.trim() || null;
+      }
+      if (dto.category !== undefined) template.category = dto.category;
+      if (dto.reviewType !== undefined) template.reviewType = dto.reviewType;
+      await stores.templates.save(template);
 
-    await this.clearContent(activeVersion.versionId);
-    await this.saveSections(dto.sections, activeVersion.versionId);
+      await this.clearContent(activeVersion.versionId, stores);
+      await this.saveSections(dto.sections, activeVersion.versionId, stores);
+    });
 
     return this.findTree(templateId);
   }
 
+  /** Freezes the draft version. It refuses a draft with no section, or a section with no question. */
   async publish(
     templateId: string,
     userId: string,
   ): Promise<TemplateTree> {
     const { actorId } = await this.companies.resolveAccount(userId);
-    const template = await this.findTemplate(templateId);
-    if (template.status !== 'draft') {
-      throw new ConflictException(
-        'Only draft templates can be published. The template is already ' +
-          template.status + '.',
+
+    await this.inTransaction(async (stores) => {
+      const template = await this.lockTemplate(stores, templateId);
+      if (template.status !== 'draft') {
+        throw new ConflictException(
+          'Only draft templates can be published. The template is already ' +
+            template.status + '.',
+        );
+      }
+      const activeVersion = await this.findActiveDraftVersion(stores, templateId);
+
+      const sections = await stores.sections.find({
+        where: { versionId: activeVersion.versionId },
+      });
+      const questions = sections.length
+        ? await stores.questions.find({
+            where: { sectionId: In(sections.map((s) => s.sectionId)) },
+          })
+        : [];
+      assertPublishable(
+        sections.map((s) => ({
+          questions: questions.filter((q) => q.sectionId === s.sectionId),
+        })),
       );
-    }
 
-    const activeVersion = await this.findActiveDraftVersion(templateId);
-    if (!activeVersion) {
-      throw new NotFoundException('No active draft version found for template');
-    }
+      activeVersion.frozenAt = new Date();
+      await stores.versions.save(activeVersion);
 
-    activeVersion.frozenAt = new Date();
-    await this.versions.save(activeVersion);
-
-    template.status = 'published';
-    template.publishedBy = actorId;
-    template.publishedAt = new Date();
-    await this.templates.save(template);
+      template.status = 'published';
+      template.publishedBy = actorId;
+      template.publishedAt = new Date();
+      await stores.templates.save(template);
+    });
 
     return this.findTree(templateId);
   }
@@ -165,12 +208,13 @@ export class BehavioralAssessmentService {
     userId: string,
   ): Promise<TemplateTree> {
     assertPublishable(dto.sections);
+    assertValidOptions(dto.sections);
     const { actorId } = await this.companies.resolveAccount(userId);
 
     await this.dataSource.transaction(async (manager) => {
       const template = await manager.findOne(BehavioralTemplate, {
         where: { templateId },
-        lock: { mode: 'pessimistic_write' },
+        lock: LOCK_FOR_WRITE,
       });
       if (!template) {
         throw new NotFoundException('Behavioral template not found');
@@ -202,16 +246,7 @@ export class BehavioralAssessmentService {
           createdBy: actorId,
         }),
       );
-      await this.saveSections(
-        dto.sections,
-        versionId,
-        {
-          sections: manager.getRepository(BehavioralSection),
-          questions: manager.getRepository(BehavioralQuestion),
-          options: manager.getRepository(BehavioralChoiceOption),
-        },
-        true,
-      );
+      await this.saveSections(dto.sections, versionId, this.storesOf(manager), true);
     });
 
     return this.findTree(templateId);
@@ -240,10 +275,40 @@ export class BehavioralAssessmentService {
     return template;
   }
 
-  private async findActiveDraftVersion(templateId: string) {
-    return this.versions
-      .findOne({ where: { templateId, frozenAt: IsNull() } })
-      .catch(() => null);
+  private storesOf(manager: EntityManager): Stores {
+    return {
+      templates: manager.getRepository(BehavioralTemplate),
+      versions: manager.getRepository(BehavioralTemplateVersion),
+      sections: manager.getRepository(BehavioralSection),
+      questions: manager.getRepository(BehavioralQuestion),
+      options: manager.getRepository(BehavioralChoiceOption),
+    };
+  }
+
+  private inTransaction<T>(run: (stores: Stores) => Promise<T>): Promise<T> {
+    return this.dataSource.transaction((manager) => run(this.storesOf(manager)));
+  }
+
+  /** Reads the template row with a write lock, so two writers wait for each other. */
+  private async lockTemplate(stores: Stores, templateId: string) {
+    const template = await stores.templates.findOne({
+      where: { templateId },
+      lock: LOCK_FOR_WRITE,
+    });
+    if (!template) {
+      throw new NotFoundException('Behavioral template not found');
+    }
+    return template;
+  }
+
+  private async findActiveDraftVersion(stores: Stores, templateId: string) {
+    const version = await stores.versions.findOne({
+      where: { templateId, frozenAt: IsNull() },
+    });
+    if (!version) {
+      throw new NotFoundException('No active draft version found for template');
+    }
+    return version;
   }
 
   private async findTree(templateId: string): Promise<TemplateTree> {
@@ -281,11 +346,7 @@ export class BehavioralAssessmentService {
   private async saveSections(
     sectionDtos: SectionDto[],
     versionId: string,
-    stores: ContentStores = {
-      sections: this.sections,
-      questions: this.questions,
-      options: this.options,
-    },
+    stores: Stores,
     freshIds = false,
   ): Promise<void> {
     for (const [index, sectionDto] of sectionDtos.entries()) {
@@ -306,19 +367,10 @@ export class BehavioralAssessmentService {
   private async saveQuestions(
     questionDtos: QuestionDto[],
     sectionId: string,
-    stores: ContentStores,
+    stores: Stores,
     freshIds: boolean,
   ): Promise<void> {
     for (const [index, questionDto] of questionDtos.entries()) {
-      if (
-        questionDto.questionType === 'multiple_choice' &&
-        (!questionDto.choiceOptions || questionDto.choiceOptions.length < 2)
-      ) {
-        throw new BadRequestException(
-          'multiple_choice questions require at least two choice options',
-        );
-      }
-
       const questionId = freshIds ? randomUUID() : (questionDto.questionId ?? randomUUID());
       const allowNotObserved =
         questionDto.questionType === 'rating_scale'
@@ -336,7 +388,10 @@ export class BehavioralAssessmentService {
       });
       await stores.questions.save(question);
 
-      const options = (questionDto.choiceOptions ?? []).map((o) =>
+      // Only a multiple choice question has options: the check above covers no other type.
+      const optionDtos =
+        questionDto.questionType === 'multiple_choice' ? (questionDto.choiceOptions ?? []) : [];
+      const options = optionDtos.map((o) =>
         stores.options.create({
           optionId: randomUUID(),
           questionId,
@@ -349,25 +404,23 @@ export class BehavioralAssessmentService {
     }
   }
 
-  private async clearContent(versionId: string): Promise<void> {
-    const sectionEntities = await this.sections.find({
+  private async clearContent(versionId: string, stores: Stores): Promise<void> {
+    const sectionEntities = await stores.sections.find({
       where: { versionId },
     });
     if (!sectionEntities.length) {
       return;
     }
     const sectionIds = sectionEntities.map((s) => s.sectionId);
-    const questionEntities = await this.questions.find({
+    const questionEntities = await stores.questions.find({
       where: { sectionId: In(sectionIds) },
     });
     const questionIds = questionEntities.map((q) => q.questionId);
 
     if (questionIds.length) {
-      await this.options.delete({ questionId: In(questionIds) });
+      await stores.options.delete({ questionId: In(questionIds) });
+      await stores.questions.delete({ sectionId: In(sectionIds) });
     }
-    if (questionIds.length) {
-      await this.questions.delete({ sectionId: In(sectionIds) });
-    }
-    await this.sections.delete({ sectionId: In(sectionIds) });
+    await stores.sections.delete({ sectionId: In(sectionIds) });
   }
 }
