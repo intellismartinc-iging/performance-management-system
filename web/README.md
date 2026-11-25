@@ -51,7 +51,7 @@ The rules for each folder are in [llm.txt](llm.txt). The design tokens and the c
 
 ## Prerequisites
 
-Node.js 24 and pnpm 12.14.0. Install from the repository root with `pnpm install`.
+Node.js 24 and pnpm 12.23.0. Install from the repository root with `pnpm install`.
 
 ## Configuration
 

@@ -59,7 +59,7 @@ What exists in the code today:
 ## Prerequisites
 
 - Node.js 24 (the CI version)
-- pnpm 12.14.0 (`corepack enable` reads the version from `packageManager`)
+- pnpm 12.23.0 (`corepack enable` reads the version from `packageManager`)
 - PostgreSQL for the database (schema `pms`)
 
 ## Installation
